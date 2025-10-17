@@ -19,7 +19,7 @@ This is a library for \*data extraction(propably not extraction), data validatio
 - classes
 - inheritence
 - polymorphism
-
+- Try throw catch
 # Create a trello board
 
 
