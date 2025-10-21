@@ -12,7 +12,11 @@ This is a library for \*data extraction(propably not extraction), data validatio
 4. MQTT library for data transmittion the data
 5. Modbus library for data transmittion
 
+# hanport class
+after reading the data from the hanport this class will be used to validate and parse the data.
 
+# mqtt class
+used to transmitt data.
 
 # Things to look at
 - interfacing
@@ -20,7 +24,7 @@ This is a library for \*data extraction(propably not extraction), data validatio
 - inheritence
 - polymorphism
 - Try throw catch
-# Create a trello board
+
 
 
 
