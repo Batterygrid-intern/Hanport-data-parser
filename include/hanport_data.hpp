@@ -23,7 +23,7 @@ class HanportData{
     HanportData(std::string filepath);
     //kalkylera crcn
     void calculate_crc(std::vector<uint8_t>& hanportmessage);
-    int open_fd(std::string filepath,std::ifstream& fd);
+    void open_fd(std::string& filepath,std::ifstream& fd);
     void read_from_fd(std::vector<uint8_t>& data_buffer,std::ifstream& fd);
     void extract_message_and_crc(std::vector<uint8_t> &data_buffer);
 
