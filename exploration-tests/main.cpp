@@ -54,9 +54,6 @@ int main(int argc, char** argv){
     }
     std::cout << '\n';
 
-
-
-
     std::cout << exclamation_pos << "\n";
     std::cout << "\n";
     std::cout << data_buffer.size() << std::endl;
