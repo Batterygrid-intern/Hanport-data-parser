@@ -3,6 +3,9 @@
 #include <vector>
 #include <string>
 #include <fstream>
+//TODO
+//ADD GETTERS FOR INITALIZED ATTRIBUTES 
+
 //START OF CONSTRUCTOR METHODS
 /*************************************************************************** */
 HanportData::HanportData(std::string filepath){
