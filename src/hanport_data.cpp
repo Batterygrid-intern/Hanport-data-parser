@@ -20,19 +20,19 @@ HanportData::HanportData(std::string filepath){
 };
 //method to calculate the crc and initialize calculated_crc attribute
 void HanportData::calculate_crc(std::vector<uint8_t>& hanport_message){
-   uint16_t crc = 0x0000;
-   for (size_t i = 0; i < hanport_message.size(); i++){
-       crc ^= hanport_message[i];
-       for (int j = 0; j < 8; j++){
-           if (crc & 0x0001){
-               crc = (crc >> 1) ^ 0xA001;
-           }
-           else{
-               crc >>= 1;
-           }
-       }
-   }
-   this->calculated_crc = crc;
+    uint16_t crc = 0x0000;
+    for (size_t i = 0; i < hanport_message.size(); i++){
+        crc ^= hanport_message[i];
+        for (int j = 0; j < 8; j++){
+            if (crc & 0x0001){
+                crc = (crc >> 1) ^ 0xA001;
+            }
+            else{
+                crc >>= 1;
+            }
+        }
+    }
+    this->calculated_crc = crc;
 }
 
 void HanportData::open_fd(std::string& filepath,std::ifstream& fd){
