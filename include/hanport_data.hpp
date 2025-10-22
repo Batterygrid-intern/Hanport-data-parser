@@ -22,9 +22,9 @@ class HanportData{
     //Stämmer inte crcn förstörs objektet och vi får försöka läsa ut ny data. 
     HanportData(std::string filepath);
     //kalkylera crcn
-    uint16_t calculate_crc(std::vector<uint8_t> data_buffer);
+    void calculate_crc(std::vector<uint8_t>& hanportmessage);
     int open_fd(std::string filepath,std::ifstream& fd);
     void read_from_fd(std::vector<uint8_t>& data_buffer,std::ifstream& fd);
-    void extract_message_and_crc(std::vector<uint8_t> message_buf,uint16_t transmitted_crc);
+    void extract_message_and_crc(std::vector<uint8_t> &data_buffer);
 
 };
