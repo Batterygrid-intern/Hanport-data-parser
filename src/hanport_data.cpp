@@ -19,7 +19,7 @@ HanportData::HanportData(std::string filepath){
     //extract transmitted crc from data to class attributes
     extract_message_and_crc(data_buffer);
     //calculate new crc from message
-    calculate_crc(this->hanportmessage); 
+    calculate_crc(this->hanport_message); 
 };
 //method to calculate the crc and initialize calculated_crc attribute
 void HanportData::calculate_crc(std::vector<uint8_t>& hanport_message){
@@ -56,7 +56,7 @@ void HanportData::read_from_fd(std::vector<uint8_t>& data_buffer,std::ifstream& 
     }
     std::cout << "Read " << data_buffer.size() << " bytes from file\n";
 }
-//initialize the hanportmessage attribute and transmitted crc attribute
+//initialize the hanport_message attribute and transmitted crc attribute
 void HanportData::extract_message_and_crc(std::vector<uint8_t>& data_buffer){
     size_t exclamation_pos = 0;
     bool found = false;
@@ -71,8 +71,8 @@ void HanportData::extract_message_and_crc(std::vector<uint8_t>& data_buffer){
     if(!found){
         throw std::runtime_error("no '!' found invalid dataformat"); 
     }
-    //extract message part and assign it to class attribute
-    this->hanportmessage.assign(data_buffer.begin(),data_buffer.begin() + exclamation_pos +1);
+    //extract message part and assign it to class attribute ...
+    this->hanport_message.assign(data_buffer.begin(),data_buffer.begin() + exclamation_pos +1);
     //extract crc from data_buffer
     std::string crc_string;
     for(size_t i = exclamation_pos + 1; i < data_buffer.size();i++){
@@ -80,6 +80,7 @@ void HanportData::extract_message_and_crc(std::vector<uint8_t>& data_buffer){
             crc_string += (char)data_buffer[i];
         }
     }
+
     if(crc_string.empty()){
         throw std::runtime_error("invalid data format, missing CRC value");
     }
@@ -91,9 +92,22 @@ void HanportData::extract_message_and_crc(std::vector<uint8_t>& data_buffer){
         throw std::runtime_error("Failed to parse crc value");
     }
 }
-/*********************************************************************************' */
+
 //GETTERS 
-//write getters do extract value of crcs
+/************************************************************************************/
+uint16_t HanportData::get_calculated_crc(){
+    return this->calculated_crc;
+}
+uint16_t HanportData::get_transmitted_crc(){
+    return this->transmitted_crc;
+}
+std::vector<uint8_t> HanportData::get_hanport_message(){
+    return this->hanport_message;
+}
 
 
+//DATA PARSING
 
+//child class for parsing data?
+
+//parse to string?

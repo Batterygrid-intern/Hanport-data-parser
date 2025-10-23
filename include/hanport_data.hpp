@@ -9,22 +9,22 @@
 class HanportData{
     private:
     //data that we want to live inside the class.
-    std::vector<uint8_t> hanportmessage;
+    std::vector<uint8_t> hanport_message;
     std::string filepath;
     uint16_t calculated_crc;
     uint16_t transmitted_crc;
     
-    public:
-    //skapa ett object
-    //När objektet skapas vill vi konstruera den med datan.
-    //Konstruktorn ska skapa ett objekt läsa data från hanporten validera crcn.
-    //Stämmer datan skapas ett objekt med meddelandet
-    //Stämmer inte crcn förstörs objektet och vi får försöka läsa ut ny data. 
+    public: 
+    /***********************************************************************'*/
     HanportData(std::string filepath);
-    //kalkylera crcn
-    void calculate_crc(std::vector<uint8_t>& hanportmessage);
+    void calculate_crc(std::vector<uint8_t>& hanport_message);
     void open_fd(std::string& filepath,std::ifstream& fd);
     void read_from_fd(std::vector<uint8_t>& data_buffer,std::ifstream& fd);
     void extract_message_and_crc(std::vector<uint8_t> &data_buffer);
+    uint16_t get_calculated_crc();
+    uint16_t get_transmitted_crc();
+    std::vector<uint8_t> get_hanport_message();
+    std::string json_parser(std::vector<uint8_t>& hanport_message);
+
 
 };
