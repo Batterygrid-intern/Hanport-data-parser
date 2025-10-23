@@ -53,8 +53,9 @@ int main(/*int argc, char** argv*/){
 
 
     int failed_readings = 0;
+    std::map<std::string,std::pair<double,std::string>> hp_data;
     while(failed_readings < MAX_TRIES){
-        
+         
         std::this_thread::sleep_for(std::chrono::seconds(10));
         try{
             HanportData data_obj(EX_DATA_PATH);
@@ -63,12 +64,14 @@ int main(/*int argc, char** argv*/){
                 std::cout << "Calucalted CRC = " << std::hex << data_obj.get_calculated_crc() << "\nTransmitted CRC = " << data_obj.get_transmitted_crc() << "\n";
                 throw std::runtime_error("Data invalid: calculated crc  not equal to transmitted crc");
             }
-            else {
+            else{
                 std::cout << "Calucalted CRC = " << std::hex << data_obj.get_calculated_crc() << "\nTransmitted CRC = " << data_obj.get_transmitted_crc() << "\n";
                 std::cout << "Data is valid" << std::endl;
+                //not so efficient?????? tänker något fel här. använder inte klassen rätt?
+                std::vector<uint8_t> data_buffer = data_obj.get_hanport_message();
+                hp_data = data_obj.hp_data_parser(data_buffer);
             }
             //reset manipulation fo std::cout ??
-
         }
         catch (const std::exception& e){
             //how to make it try again?

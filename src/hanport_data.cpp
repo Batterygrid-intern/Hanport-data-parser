@@ -107,7 +107,15 @@ std::vector<uint8_t> HanportData::get_hanport_message(){
 
 //DATA PARSING
 /*******************************************************************/
-std::map<std::string,std::pair<double,std::string> HanportData::hp_data_parser(std::vector<uint8_t>&hanport_message);
+std::map<std::string,std::pair<double,std::string>> HanportData::hp_data_parser(std::vector<uint8_t>&hanport_message){
+    std::string dt_buffer(hanport_message.begin(),hanport_message.end());
+    //define map to store all key values pairs with obis id and data related to it
+    std::map<std::string,std::pair<double,std::string>> hp_data  {{"01011",{1020,"wh"}}};
+    
+    std::cout << dt_buffer;
+    //iterate through string
+    return hp_data;
+}
 //swtich case? 
 //child class for parsing data?
 
