@@ -20,17 +20,37 @@
 //build binary file that you can flash on any raspberry pi.
 //build libraries static or dynamic? static because im either way going to need all the methods i create.?
 //states error state ->(reset)-> running state?
+
+
+//SETUP TTYAMA0 DEVICE TO INTERPRATE MESSAGE CORRECTLY ACCODRING TO THE HANPORT PROTOCOL (1 time thing at start-up)
+/***********************************************************************/
+/*1. READ DATA FROM SERIAL PORT TTYAMA0
+  2. WRITE DATA TO FILE
+  ? do we want to read every 10 seconds or activate dr pin every... */
+
+//HANPORTDATA PARSER
+/**********************************************************************/
+/*3. READ DATA FROM FILE, VALIDATE AND PARSE IT TO JSON (formatted string?) save in std::map?
+  4. Parse to string attribute inside class? 
+  ? what do we want to do with the data?*/
+
+//MQTT 
+/***********************************************************************/
+/*5.BROKER RUNNING IN DOCKER CONTAINER ON SAME DEVICE
+  6.PUBLISH TO TOPIC..... to broker broker inserts in database?*/
+ 
+//MODBUS
+/***********************************************************************/
+
+//DOCUMENTATION
+/***********************************************************************/
+/*1. write comments and document application
+ */
 int main(/*int argc, char** argv*/){
     //call constructor
     //const char* path_to_testfile = getenv("example_data");
     //read from file as long as.... change state so that you can press a button on the pi or command on computer to restart program?
 
-//SETUP TTYAMA0 DEVICE TO INTERPRATE MESSAGE CORRECTLY ACCODRING TO THE HANPORT PROTOCOL (1 time thing at start-up)
-
-/*1. READ DATA FROM SERIAL PORT TTYAMA0
-  2. WRITE DATA TO FILE
-  3. READ DATA FROM FILE, VALIDATE AND PARSE IT TO JSON*/
-//*********************************************************************/
 
     int failed_readings = 0;
     while(failed_readings < MAX_TRIES){
