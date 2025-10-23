@@ -1,4 +1,5 @@
 #include <vector>
+#include <map>
 //skapa en class med olika interface.?
 
 
@@ -24,7 +25,7 @@ class HanportData{
     uint16_t get_calculated_crc();
     uint16_t get_transmitted_crc();
     std::vector<uint8_t> get_hanport_message();
-    std::string json_parser(std::vector<uint8_t>& hanport_message);
+    std::map<std::string, std::pair<double , std::string> hp_data_parser(std::vector<uint8_t>& hanport_message);
 
 
 };

@@ -105,9 +105,10 @@ std::vector<uint8_t> HanportData::get_hanport_message(){
     return this->hanport_message;
 }
 
-
 //DATA PARSING
-
+/*******************************************************************/
+std::map<std::string,std::pair<double,std::string> HanportData::hp_data_parser(std::vector<uint8_t>&hanport_message);
+//swtich case? 
 //child class for parsing data?
 
 //parse to string?
