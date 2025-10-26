@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include <fstream>
+#include <string>
 //TODO
 //ADD GETTERS FOR INITALIZED ATTRIBUTES 
 
@@ -107,16 +108,50 @@ std::vector<uint8_t> HanportData::get_hanport_message(){
 
 //DATA PARSING
 /*******************************************************************/
-std::map<std::string,std::pair<double,std::string>> HanportData::hp_data_parser(std::vector<uint8_t>&hanport_message){
+std::map<std::string,std::pair<std::string,std::string>> HanportData::hp_data_parser(std::vector<uint8_t>&hanport_message){
     std::string dt_buffer(hanport_message.begin(),hanport_message.end());
     //define map to store all key values pairs with obis id and data related to it
-    std::map<std::string,std::pair<double,std::string>> hp_data  {{"01011",{1020,"wh"}}};
-    
-    std::cout << dt_buffer;
-    //iterate through string
+    std::map<std::string,std::pair<std::string,std::string>> hp_data;
+    //std::cout << dt_buffer;
+    //ta fram positionen för vart obis börjar
+    //ta fram positionen för vart obis slutar
+    std::string start_del = "-";
+    std::string obis_del = "(";
+    std::string value_del = "*";
+    std::string unit_del = ")";
+    std::string newline_del = "\n";
+    //använd vs code debugger.
+    //definiera start positionen
+    auto start_pos = dt_buffer.find(start_del) - 1;
+    auto new_line_pos = dt_buffer.find(newline_del) + 1;
+    //auto next_start_pos = dt_buffer.find(unit_del) + 3;
+    //för att flytta fram till nästa rad och börja läsa men medelandena är olika långa.
+    std::cout << "\n" << dt_buffer[start_pos] << " " << dt_buffer[new_line_pos] << std::endl;
+    //auto obis_pos = dt_buffer.find(obis_del);
+    /*while(obis_pos != std::string::npos){
+       //lägg allt innan från start position till ( i en behållare 
+       
+       //lägg allt från från ( till *  i en behållare
+      
+       //lägg allt från * till ) i en behållare
+       
+       //flytta fram från s till nästa rad? behöver jag göra det hur gör jag det?
+       //start + unit del + 1
+    }*/
+    // hur fungerar detta? 
+    /*for(auto& p : hp_data){
+        std::cout << p.first << " " << std::endl;
+    }*/
     return hp_data;
 }
-//swtich case? 
-//child class for parsing data?
 
-//parse to string?
+
+/*auto value_pos = dt_buffer.find(value_del);
+        auto unit_pos = dt_buffer.find(unit_del);
+        std::string obis_code = dt_buffer.substr(start_pos,obis_pos);
+        std::string value = dt_buffer.substr(obis_pos + 1, value_pos - obis_pos -1);
+        std::string unit = dt_buffer.substr(value_pos + 1, unit_pos - value_pos -1);
+        hp_data[obis_code] = std::make_pair(value,unit);
+        obis_pos = dt_buffer.find(obis_del);
+        break;
+*/

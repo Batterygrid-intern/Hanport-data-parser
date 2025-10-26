@@ -22,9 +22,11 @@ class HanportData{
     void open_fd(std::string& filepath,std::ifstream& fd);
     void read_from_fd(std::vector<uint8_t>& data_buffer,std::ifstream& fd);
     void extract_message_and_crc(std::vector<uint8_t> &data_buffer);
+    /************************************************************************ */
     uint16_t get_calculated_crc();
     uint16_t get_transmitted_crc();
     std::vector<uint8_t> get_hanport_message();
-    std::map<std::string, std::pair<double,std::string>> hp_data_parser(std::vector<uint8_t>& hanport_message);
+    /************************************************************************** */
+    std::map<std::string, std::pair<std::string,std::string>> hp_data_parser(std::vector<uint8_t>& hanport_message);
 
 };
