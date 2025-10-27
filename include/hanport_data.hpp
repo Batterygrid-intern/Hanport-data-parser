@@ -6,16 +6,20 @@
 
 
 
+
 //purpose of this class is to read, validate and parse data to a semistructured format like json csv yaml data from a electricty meater 
 class HanportData{
     private:
     //data that we want to live inside the class.
     std::vector<uint8_t> hanport_message;
+    std::vector<std::string> str_ar;
+    std::map<std::string, float> parsed_data;
     std::string filepath;
     uint16_t calculated_crc;
     uint16_t transmitted_crc;
     
-    public: 
+    public:
+     
     /***********************************************************************'*/
     HanportData(std::string filepath);
     void calculate_crc(std::vector<uint8_t>& hanport_message);
@@ -27,6 +31,12 @@ class HanportData{
     uint16_t get_transmitted_crc();
     std::vector<uint8_t> get_hanport_message();
     /************************************************************************** */
-    std::map<std::string, std::pair<std::string,std::string>> hp_data_parser(std::vector<uint8_t>& hanport_message);
+    //std::map<std::string, std::pair<std::string,std::string>> hp_data_parser(std::vector<uint8_t>& hanport_message);
+    void message_to_string_ar();
+    void parse_message();
+    void parse_meter_message(std::string& str_buf);
+    void parse_time_message(std::string& str_buf);
+     
+
 
 };

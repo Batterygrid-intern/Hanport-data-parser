@@ -65,15 +65,10 @@ int main(/*int argc, char** argv*/){
                 std::cout << "Calucalted CRC = " << std::hex << std::showbase <<  data_obj.get_calculated_crc() << "\nTransmitted CRC = " << data_obj.get_transmitted_crc() << std::dec << std::noshowbase << "\n";
                 throw std::runtime_error("Data invalid: calculated crc  not equal to transmitted crc");
             }
-            else{
-                std::cout << "Calucalted CRC = " << std::hex << std::setiosflags(std::ios::showbase) << data_obj.get_calculated_crc() << "\nTransmitted CRC = " << data_obj.get_transmitted_crc() << std::dec << std::noshowbase << "\n";
-                std::cout << "Data is valid" << std::endl;
-                //not so efficient?????? tänker något fel här. använder inte klassen rätt?
-                std::vector<uint8_t> data_buffer = data_obj.get_hanport_message();
-                hp_data = data_obj.hp_data_parser(data_buffer);
-                //skriv ut hp_data kolla så att det stämmer
-            }
-            //reset cout manipulation for std::cout ??
+            std::cout << "Calucalted CRC = " << std::hex << std::setiosflags(std::ios::showbase) << data_obj.get_calculated_crc() << "\nTransmitted CRC = " << data_obj.get_transmitted_crc() << std::dec << std::noshowbase << "\n";
+            std::cout << "Data is valid" << std::endl;
+            data_obj.parse_message();
+
         }
         catch (const std::exception& e){
             //how to make it try again?

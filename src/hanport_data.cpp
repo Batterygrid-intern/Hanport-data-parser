@@ -4,12 +4,14 @@
 #include <string>
 #include <fstream>
 #include <string>
-//TODO
-//ADD GETTERS FOR INITALIZED ATTRIBUTES 
+#include <sstream>
 
+//TODO
+//bygg om klassen så den tar in listor som objekt
 //START OF CONSTRUCTOR METHODS
 /*************************************************************************** */
 HanportData::HanportData(std::string filepath){
+    //bygg om 
     this->filepath=filepath;
     std::ifstream file_d;
     std::vector<uint8_t> data_buffer;
@@ -20,7 +22,9 @@ HanportData::HanportData(std::string filepath){
     //extract transmitted crc from data to class attributes
     extract_message_and_crc(data_buffer);
     //calculate new crc from message
-    calculate_crc(this->hanport_message); 
+    calculate_crc(this->hanport_message);
+
+    message_to_string_ar();
 };
 //method to calculate the crc and initialize calculated_crc attribute
 void HanportData::calculate_crc(std::vector<uint8_t>& hanport_message){
@@ -93,6 +97,64 @@ void HanportData::extract_message_and_crc(std::vector<uint8_t>& data_buffer){
         throw std::runtime_error("Failed to parse crc value");
     }
 }
+void HanportData::message_to_string_ar(){
+    std::string dt_buffer(this->hanport_message.begin(),this->hanport_message.end());
+    std::stringstream ss(dt_buffer);
+    std::string line_buf;
+    while(getline(ss,line_buf)){
+        this->str_ar.push_back(line_buf);
+    }
+    if(this->str_ar.empty()){
+        throw std::runtime_error("failed parse hanport_message to string array");
+    }
+}
+//PARSE /************************************************************************************ */
+void HanportData::parse_message(){
+    //gå igenom hela listan med strängar
+    //plocka ut obis värdet lägg som nyckel, float som tar emot det andra värdet
+    //
+    std::string buffer;
+    for(size_t i = 0; i < this->str_ar.size(); i++){
+        buffer = this->str_ar[i];
+        if(buffer.find('(') && buffer.find('*')){
+           parse_meter_message(buffer);
+        }
+        else if (buffer.find('(')){
+            parse_time_message(buffer);
+        }
+        else {
+            continue;
+        }
+    }
+    for(const auto&  p : this->parsed_data){
+    std::cout << p.first << " "  << p.second<< std::endl; 
+    }
+}
+
+
+void HanportData::parse_meter_message(std::string& str_buf){
+    char obis_del = '(';
+    char last_del = '*';
+    int start_pos = 0; 
+    int obis_pos = str_buf.find(obis_del);
+    int last_pos = str_buf.find(last_del);
+    std::string obis_code = str_buf.substr(start_pos,obis_pos-1);
+    std::string value = str_buf.substr(obis_pos + 1, last_pos - obis_pos -1);
+    std::cout << value << std::endl;
+    //this->parsed_data[obis_code] = std::stof(value);
+    //omvandla direkt till rätt format / kw 
+    //vinter / sommar tid  
+    //spara bara konverterade eller aggergerade värden.
+}
+void HanportData::parse_time_message(std::string& str_buf){
+    char obis_del = '(';
+    char last_del = ')';
+    int obis_pos = str_buf.find(obis_del);
+    int last_pos = str_buf.find(last_del);
+    std::string time_value = str_buf.substr(obis_pos + 1, last_pos - obis_pos -1);
+    std::cout << time_value << std::endl;
+    //this->parsed_data["Time_stamp"] = std::stof(time_value);
+}
 
 //GETTERS 
 /************************************************************************************/
@@ -108,44 +170,81 @@ std::vector<uint8_t> HanportData::get_hanport_message(){
 
 //DATA PARSING
 /*******************************************************************/
-std::map<std::string,std::pair<std::string,std::string>> HanportData::hp_data_parser(std::vector<uint8_t>&hanport_message){
+//string array seperate by each line
+
+//iterate through string
+
+//switch case for each obis 
+
+
+//method for extracting time
+
+//method for extracting values
+
+
+
+
+
+
+
+
+
+
+
+
+/*std::map<std::string,std::pair<std::string,std::string>> HanportData::hp_data_parser(std::vector<uint8_t>&hanport_message){
     std::string dt_buffer(hanport_message.begin(),hanport_message.end());
     //define map to store all key values pairs with obis id and data related to it
     std::map<std::string,std::pair<std::string,std::string>> hp_data;
     //std::cout << dt_buffer;
-    //ta fram positionen för vart obis börjar
-    //ta fram positionen för vart obis slutar
+    //alla delimeters att leta efter 
     std::string start_del = "-";
     std::string obis_del = "(";
     std::string value_del = "*";
     std::string unit_del = ")";
-    std::string newline_del = "\n";
-    //använd vs code debugger.
-    //definiera start positionen
+    //definiera positionerna för första läsningen
     auto start_pos = dt_buffer.find(start_del) - 1;
-    auto new_line_pos = dt_buffer.find(newline_del) + 1;
+    auto unit_pos = 0;
+    auto value_pos = 0;
+
+    std::string obis_code;
+    std::string value;
+    std::string unit;
     //auto next_start_pos = dt_buffer.find(unit_del) + 3;
     //för att flytta fram till nästa rad och börja läsa men medelandena är olika långa.
-    std::cout << "\n" << dt_buffer[start_pos] << " " << dt_buffer[new_line_pos] << std::endl;
-    //auto obis_pos = dt_buffer.find(obis_del);
-    /*while(obis_pos != std::string::npos){
-       //lägg allt innan från start position till ( i en behållare 
-       
-       //lägg allt från från ( till *  i en behållare
-      
-       //lägg allt från * till ) i en behållare
-       
-       //flytta fram från s till nästa rad? behöver jag göra det hur gör jag det?
-       //start + unit del + 1
-    }*/
-    // hur fungerar detta? 
-    /*for(auto& p : hp_data){
-        std::cout << p.first << " " << std::endl;
-    }*/
+    std::cout << "\n" << dt_buffer[start_pos] << std::endl;
+    auto obis_pos = dt_buffer.find(obis_del);
+    while(obis_pos != std::string::npos){
+
+        // hitta positionen för value delaren
+        value_pos = dt_buffer.find(value_del,obis_pos);
+        // hitta positionen mät enheten
+        unit_pos = dt_buffer.find(unit_del, value_pos);
+        //plocka ut obis del
+        obis_code = dt_buffer.substr(start_pos,obis_pos-start_pos -1);
+        std::cout << obis_code << "\n";
+        // Plocka ut värde delen
+        value = dt_buffer.substr(obis_pos + 1, value_pos - obis_pos -1);
+        std::cout << value  << "\n";
+        // Plocka ut mätvärde enheten
+        unit = dt_buffer.substr(value_pos + 1, unit_pos - value_pos -1);
+        std::cout << unit << "\n";
+        //lägg alla 3 behållare i en map med obis_code som nyckel
+        hp_data[obis_code] = std::make_pair(value,unit);
+
+        start_pos = dt_buffer.find(unit_del,start_pos) + 3;
+        if(start_pos != 1){
+            break;
+        }
+        obis_pos = dt_buffer.find(obis_del,start_pos);
+        // flytta fram från s till nästa rad? behöver jag göra det hur gör jag det?
+        // start + unit del + 1
+    }
     return hp_data;
-}
+}*/
 
 
+//
 /*auto value_pos = dt_buffer.find(value_del);
         auto unit_pos = dt_buffer.find(unit_del);
         std::string obis_code = dt_buffer.substr(start_pos,obis_pos);
