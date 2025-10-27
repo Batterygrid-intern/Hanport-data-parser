@@ -56,7 +56,7 @@ int main(/*int argc, char** argv*/){
     std::map<std::string,std::pair<std::string,std::string>> hp_data;
     while(failed_readings < MAX_TRIES){
          
-        std::this_thread::sleep_for(std::chrono::seconds(10));
+        std::this_thread::sleep_for(std::chrono::seconds(2));
         try{
             HanportData data_obj(EX_DATA_PATH);
             //compare transmitted crc with calculated crc

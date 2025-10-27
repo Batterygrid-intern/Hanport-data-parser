@@ -5,10 +5,11 @@
 #include <fstream>
 #include <string>
 #include <sstream>
+#include <ctime>
 
 //TODO
 //bygg om klassen så den tar in listor som objekt
-//START OF CONSTRUCTOR METHODS
+//START OF CONSTRUCTOR METHOD
 /*************************************************************************** */
 HanportData::HanportData(std::string filepath){
     //bygg om 
@@ -112,18 +113,12 @@ void HanportData::message_to_string_ar(){
 void HanportData::parse_message(){
     //gå igenom hela listan med strängar
     //plocka ut obis värdet lägg som nyckel, float som tar emot det andra värdet
-    //
     std::string buffer;
     for(size_t i = 0; i < this->str_ar.size(); i++){
         buffer = this->str_ar[i];
-        if(buffer.find('(') && buffer.find('*')){
-           parse_meter_message(buffer);
-        }
-        else if (buffer.find('(')){
+        if (buffer.find(this->time_stamp)!= std::string::npos){
+            //std::cout << "time stamp obis found: " << buffer << std::endl;
             parse_time_message(buffer);
-        }
-        else {
-            continue;
         }
     }
     for(const auto&  p : this->parsed_data){
@@ -151,9 +146,23 @@ void HanportData::parse_time_message(std::string& str_buf){
     char last_del = ')';
     int obis_pos = str_buf.find(obis_del);
     int last_pos = str_buf.find(last_del);
+    std::tm time_obj = {};
+
     std::string time_value = str_buf.substr(obis_pos + 1, last_pos - obis_pos -1);
-    std::cout << time_value << std::endl;
-    //this->parsed_data["Time_stamp"] = std::stof(time_value);
+    if(time_value.size() > 12){
+        time_value = time_value.substr(0,12);
+    }
+    time_obj.tm_year= std::stoi(time_value.substr(0,2)) + 100;
+    time_obj.tm_mon = std::stoi(time_value.substr(2,2)) - 1;
+    time_obj.tm_mday = std::stoi(time_value.substr(4,2));
+    time_obj.tm_hour = std::stoi(time_value.substr(6,2));
+    time_obj.tm_min = std::stoi(time_value.substr(8,2));
+    time_obj.tm_sec = std::stoi(time_value.substr(10,2));
+
+    std::time_t unix_time = std::mktime(&time_obj);
+    std::cout << std::put_time(&time_obj, "%Y-%m-%d %H:%M:%S")<< std::endl;
+    std::cout << "Unix timestamp: " << unix_time << std::endl;
+    ////this->parsed_data["Time_stamp"] = std::stof(time_value);
 }
 
 //GETTERS 

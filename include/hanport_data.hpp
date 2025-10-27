@@ -17,6 +17,13 @@ class HanportData{
     std::string filepath;
     uint16_t calculated_crc;
     uint16_t transmitted_crc;
+    //date and time
+    //lägg obis värdet i koden med kommentar eller som enum?
+    std::string time_stamp = "0-0:1.0.0";
+    std::string active_consumtion = "1-0:1.8.0";
+    std::string active_production = "1-0:2.8.0";
+    std::string reactive_consumtion = "1-0:3.8.0";
+    std::string reactive_production = "1-0:4.8.0";
     
     public:
      
