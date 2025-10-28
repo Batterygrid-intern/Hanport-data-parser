@@ -1,4 +1,4 @@
-#include "hanport_data.hpp"
+#include "hpMessageValidator.hpp"
 #include <iostream>
 #include <cstdlib>
 #include <iomanip>
@@ -47,38 +47,34 @@
 /*1. write comments and document application
  */
 int main(/*int argc, char** argv*/){
-    //call constructor
-    //const char* path_to_testfile = getenv("example_data");
-    //read from file as long as.... change state so that you can press a button on the pi or command on computer to restart program?
-
-
+    //variable to calculate how many failed validations that is made
     int failed_readings = 0;
-    std::map<std::string,std::pair<std::string,std::string>> hp_data;
     while(failed_readings < MAX_TRIES){
-         
+        //array for raw message read from serial port && array of strings to store the data line by line for data_parsing
+        std::vector<uint8_t> raw_hp_message;
+        std::vector<std::string> message_array; 
+        //just for use when testing
         std::this_thread::sleep_for(std::chrono::seconds(2));
+        //try to validate the data if failed catch exceptions thrown inside HanportMessageValidator class.
         try{
-            HanportData data_obj(EX_DATA_PATH);
-            //compare transmitted crc with calculated crc
-            
-            if(data_obj.get_calculated_crc() != data_obj.get_transmitted_crc()){
-                std::cout << "Calucalted CRC = " << std::hex << std::showbase <<  data_obj.get_calculated_crc() << "\nTransmitted CRC = " << data_obj.get_transmitted_crc() << std::dec << std::noshowbase << "\n";
+            //instantiate message_validator object with transmitted raw data from serial port exceptions will be thrown if construction fails 
+            HanportMessageValidator message_validator(raw_hp_message); 
+            //compare the crc calculated inside the constructor with the transmitted crc extracted from the message 
+            if(message_validator.get_calculated_crc() != message_validator.get_transmitted_crc()){
+                std::cout << "Calucalted CRC = " << std::hex << std::showbase <<  message_validator.get_calculated_crc() << "\nTransmitted CRC = " << data_obj.get_transmitted_crc() << std::dec << std::noshowbase << "\n";
                 throw std::runtime_error("Data invalid: calculated crc  not equal to transmitted crc");
             }
-            std::cout << "Calucalted CRC = " << std::hex << std::setiosflags(std::ios::showbase) << data_obj.get_calculated_crc() << "\nTransmitted CRC = " << data_obj.get_transmitted_crc() << std::dec << std::noshowbase << "\n";
+            std::cout << "Calucalted CRC = " << std::hex << std::setiosflags(std::ios::showbase) << message_validator.get_calculated_crc() << "\nTransmitted CRC = " << data_obj.get_transmitted_crc() << std::dec << std::noshowbase << "\n";
             std::cout << "Data is valid" << std::endl;
-            data_obj.parse_message();
-
+            //from message_validator return a string array for the data to be parsed
+            message_array = message_validator.message_to_string_arr();
         }
+        //catch exceptions thrown inside message_validator
         catch (const std::exception& e){
-            //how to make it try again?
-            //loop to make the program live?
-            //try number of times before shutting down and give a warning?
-            //call for destructor?? it passes out of scope so no?
             std::cerr << "\nError " << e.what() << "\n";
             failed_readings ++;
-            //return 1;  //change state?
+            continue;
         }
     }
-return 0;
+    return 0;
 }
