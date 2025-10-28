@@ -61,10 +61,10 @@ int main(/*int argc, char** argv*/){
             HanportMessageValidator message_validator(raw_hp_message); 
             //compare the crc calculated inside the constructor with the transmitted crc extracted from the message 
             if(message_validator.get_calculated_crc() != message_validator.get_transmitted_crc()){
-                std::cout << "Calucalted CRC = " << std::hex << std::showbase <<  message_validator.get_calculated_crc() << "\nTransmitted CRC = " << data_obj.get_transmitted_crc() << std::dec << std::noshowbase << "\n";
+                std::cout << "Calucalted CRC = " << std::hex << std::showbase <<  message_validator.get_calculated_crc() << "\nTransmitted CRC = " << message_validator.get_transmitted_crc() << std::dec << std::noshowbase << "\n";
                 throw std::runtime_error("Data invalid: calculated crc  not equal to transmitted crc");
             }
-            std::cout << "Calucalted CRC = " << std::hex << std::setiosflags(std::ios::showbase) << message_validator.get_calculated_crc() << "\nTransmitted CRC = " << data_obj.get_transmitted_crc() << std::dec << std::noshowbase << "\n";
+            std::cout << "Calucalted CRC = " << std::hex << std::setiosflags(std::ios::showbase) << message_validator.get_calculated_crc() << "\nTransmitted CRC = " << message_validator.get_transmitted_crc() << std::dec << std::noshowbase << "\n";
             std::cout << "Data is valid" << std::endl;
             //from message_validator return a string array for the data to be parsed
             message_array = message_validator.message_to_string_arr();
