@@ -1,11 +1,11 @@
 # build messagevalidator library
-add_library(hanportMessageValidator STATIC HanportMessageValidator.cpp)
-target_include_directories(hanportMessageValidator 
+add_library(hpMessageValidator STATIC hpMessageValidator.cpp)
+target_include_directories(hpMessageValidator 
     PUBLIC ${CMAKE_SOURCE_DIR}/include
 )
 # build hpData library
 add_library(hpData STATIC hpData.cpp)
-target_include_directories(hpdata
+target_include_directories(hpData
     PUBLIC ${CMAKE_SOURCE_DIR}/include
 )
 # build executable and link to libraries

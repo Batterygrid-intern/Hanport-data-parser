@@ -21,14 +21,45 @@ void hpData::parse_message(){
         }
         //obis for time_stamp
         if(line.find("0-0:1.0.0") != std::string::npos){
-            parse_time();
+            this->time_stamp = parse_time(line);
         }
         else{
             parse_electricity_data(line);
         }
     }
 }
-void hpData::parse_time(){
+//do we want this?
+float hpData::parse_time(std::string& line){
+    float time_value = 0; 
+    char obis_del('(');
+    char time_del(')');
+    int start_pos = line.find(obis_del) +1;
+    int last_pos = line.find(time_del) - 1;
+    int chars_to_read = last_pos - start_pos;
+    try{
+        time_value = std::stof(line.substr(start_pos, chars_to_read));
+    }
+    catch(std::exception& e){
+        throw std::runtime_error("failed to convert time_value to float");
+    }
+    
+    return time_value;  
+
+}
+float hpData::set_value(std::string& line){
+    char obis_del =  '(';
+    char unit_del = '*';
+    float value = 0;
+    int start_pos = line.find(obis_del) + 1;
+    int end_pos = line.find(unit_del) - 1;
+    int num_of_chars = end_pos - start_pos;
+    try{
+        value = std::stof(line.substr(start_pos, num_of_chars));
+    }
+    catch(std::exception& e){
+        throw std::runtime_error("failed to convert string to float for value");
+    }
+    return value;
 }
 //find electricity obis
 void hpData::parse_electricity_data(std::string& line){
@@ -153,17 +184,3 @@ void hpData::parse_electricity_data(std::string& line){
     }
 }
 
-float hpData::set_value(std::string& line){
-    char obis_del =  '(';
-    char unit_del = '*';
-    float value = 0;
-    int start_pos = line.find(obis_del) + 1;
-    int end_pos = line.find(unit_del) - 1;
-    int num_of_chars = end_pos - start_pos;
-    try{
-        float value = std::stof(line.substr(start_pos,num_of_chars));
-    }
-    catch(std::exception& e){
-        throw std::runtime_error("failed to convert string to float for value");
-    }
-}

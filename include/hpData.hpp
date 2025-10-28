@@ -50,16 +50,14 @@ class hpData{
     //method to parse_message from string array
     void parse_message();
     //method to parse the time object
-    void parse_time();
+    float parse_time(std::string &line);
     //method to parse the electricity data
     void parse_electricity_data(std::string& line);
     //method do set the value to value attribute
     float set_value(std::string& line);
 
-    //transformera värde attribut till dem värden vi vill skicka kw /mw
+    //getters to get data and transform how you want?
+    //transformera värde attribut till dem värden vi vill skicka kw /mw olika metoder för att transformera olika datavärden
 
     //getters
-
-
-
 };
