@@ -1,5 +1,5 @@
-add_library(hanport_data STATIC hanport_data.cpp)
-target_include_directories(hanport_data 
+add_library(hanportMessageValidator STATIC HanportMessageValidator.cpp)
+target_include_directories(hanportMessageValidator 
     PUBLIC ${CMAKE_SOURCE_DIR}/include
 )
 
