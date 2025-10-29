@@ -1,6 +1,7 @@
 #include "hpMessageValidator.hpp"
 #include "hpDataParser.hpp"
 #include "hpData.hpp"
+#include "hpSerialRead.hpp"
 #include <iostream>
 #include <cstdlib>
 #include <iomanip>
@@ -53,7 +54,10 @@ int main(/*int argc, char** argv*/){
     hpData data_obj;
     while(failed_readings < MAX_TRIES){
         //array for raw message read from serial port && array of strings to store the data line by line for data_parsing
-        std::vector<uint8_t> raw_hp_message;
+        hpSerialRead data_reader(EX_DATA_PATH);
+        std::ifstream fd = data_reader.open_fd();
+        data_reader.read_from_fd(fd); 
+        std::vector<uint8_t> raw_hp_message = data_reader.getdata();
         std::vector<std::string> message_array; 
         //just for use when testing
         std::this_thread::sleep_for(std::chrono::seconds(2));
@@ -82,6 +86,7 @@ int main(/*int argc, char** argv*/){
         try{
           hpDataParser message_parser(message_array);
           message_parser.parse_message(data_obj);
+          std::cout <<"active energy export: " << data_obj.active_enery_import_total << std::endl;
         }
         catch(const std::exception& e){
           std::cerr << "\nError " << e.what() << "\n";

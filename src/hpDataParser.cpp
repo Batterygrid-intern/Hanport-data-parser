@@ -25,7 +25,7 @@ void hpDataParser::parse_message(hpData& dt_obj){
         }
         else{
             char obis_del = ('(');
-            std::string obis_code = line.substr(0,line.find(obis_del)-1);
+            std::string obis_code = line.substr(0,line.find(obis_del));
             parse_electricity_data(line,obis_code, dt_obj);
         }
     }

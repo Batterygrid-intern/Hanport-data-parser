@@ -90,6 +90,7 @@ std::vector<std::string> HanportMessageValidator::message_to_string_arr(){
     if(str_arr.empty()){
         throw std::runtime_error("failed parse hanport_message to string array");
     }
+    return str_arr;
 }
 
 //GETTERS 

@@ -26,7 +26,9 @@ example_data = (
     b"1-0:72.7.0(241.3*V)\r\n"
     b"1-0:31.7.0(004.2*A)\r\n"
     b"1-0:51.7.0(001.6*A)\r\n"
-    b"1-0:71.7.0(001.7*A)\r\n!"
+    b"1-0:71.7.0(001.7*A)\r\n"
+    b"!7945"
+
 )
 example_data2 = (
     b"/ADN9 6560\r\n\r\n"
@@ -62,6 +64,6 @@ example_data2 = (
     b"!9AD0"
 )
 with open("meter_data.bin", "wb") as f:
-    f.write(example_data2)
+    f.write(example_data)
 
-print(f"Skapade meter_data.bin med {len(example_data2)} bytes")
+print(f"Skapade meter_data.bin med {len(example_data)} bytes")
