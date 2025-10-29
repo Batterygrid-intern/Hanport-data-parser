@@ -1,10 +1,11 @@
 #include "hpMessageValidator.hpp"
+#include "hpDataParser.hpp"
+#include "hpData.hpp"
 #include <iostream>
 #include <cstdlib>
 #include <iomanip>
 #include <thread>
 #include <chrono>
-
 #ifndef EX_DATA_PATH
 #define EX_DATA_PATH "ex_data"
 #endif
@@ -49,6 +50,7 @@
 int main(/*int argc, char** argv*/){
     //variable to calculate how many failed validations that is made
     int failed_readings = 0;
+    hpData data_obj;
     while(failed_readings < MAX_TRIES){
         //array for raw message read from serial port && array of strings to store the data line by line for data_parsing
         std::vector<uint8_t> raw_hp_message;
@@ -74,6 +76,16 @@ int main(/*int argc, char** argv*/){
             std::cerr << "\nError " << e.what() << "\n";
             failed_readings ++;
             continue;
+        }
+        //initalise message_parser 
+        //save parsed data in data object. 
+        try{
+          hpDataParser message_parser(message_array);
+          message_parser.parse_message(data_obj);
+        }
+        catch(const std::exception& e){
+          std::cerr << "\nError " << e.what() << "\n";
+          failed_readings ++;
         }
     }
     return 0;

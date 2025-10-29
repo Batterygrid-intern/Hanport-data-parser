@@ -1,9 +1,12 @@
 #include <vector>
 #include <string>
-
+//publik för att enkelt komma åt utanför klassen eller privat med getters
+//metoder för att transformera eller transformera på en gång och till vad?
+//brukar man använda andra klasser eller structs som attribut i en klass?
+//bygga läsning från seriell porten sen modbus kommunikationen.
+#pragma once
 class hpData{
-    private:
-    std::vector<std::string>  message_array;
+    public:
     //time_stamp on the message;
     float time_stamp = 0;
     //active energy(energy used to light up a lightbulb run a motor)
@@ -41,23 +44,6 @@ class hpData{
     float l1_current_rms = 0;
     float l2_current_rms = 0;
     float l3_current_rms = 0;
+    private:
 
-
-    public:
-
-    hpData(std::vector<std::string> message__array);
-   
-    //method to parse_message from string array
-    void parse_message();
-    //method to parse the time object
-    float parse_time(std::string &line);
-    //method to parse the electricity data
-    void parse_electricity_data(std::string& line);
-    //method do set the value to value attribute
-    float set_value(std::string& line);
-
-    //getters to get data and transform how you want?
-    //transformera värde attribut till dem värden vi vill skicka kw /mw olika metoder för att transformera olika datavärden
-
-    //getters
 };
