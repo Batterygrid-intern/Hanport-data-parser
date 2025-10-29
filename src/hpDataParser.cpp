@@ -135,7 +135,7 @@ void hpDataParser::parse_electricity_data(std::string& line,std::string& obis_co
         dt_obj.l1_reactive_power_import = set_value(line);
     }
     //l1 reactive power export
-    else if(obis_code == "1-0:24.1.7.0"){
+    else if(obis_code == "1-0:24.7.0"){
         dt_obj.l1_reactive_power_export = set_value(line);
     }
     //l2 reactive power import
@@ -171,7 +171,7 @@ void hpDataParser::parse_electricity_data(std::string& line,std::string& obis_co
 
     //AMPHERE FOR EACH PHASE
     //l1 current rms
-    else if(obis_code == "1-0:32.7.0"){
+    else if(obis_code == "1-0:31.7.0"){
         dt_obj.l1_current_rms = set_value(line);
     }
     //l2 current rms
