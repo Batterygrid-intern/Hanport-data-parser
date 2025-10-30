@@ -1,4 +1,6 @@
 #include <vector>
+#include <cstdint>
+#include <string>
 //purpose of this class is to read, validate and parse data to a semistructured format like json csv yaml data from a electricty meater 
 class HanportMessageValidator{
     private:

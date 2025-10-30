@@ -1,5 +1,8 @@
 #include <string>
 #include <fstream>
+#include <vector>
+#include <cstdint>
+#include <CppLinuxSerial/SerialPort.hpp>
 
 class hpSerialRead{
     private:

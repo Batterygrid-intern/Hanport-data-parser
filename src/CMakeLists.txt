@@ -22,5 +22,6 @@ target_link_libraries(${PROJECT_NAME}
     hpDataParser 
     hpData
     hpSerialRead
+    CppLinuxSerial
 )
 

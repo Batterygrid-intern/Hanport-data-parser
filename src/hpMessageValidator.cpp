@@ -27,6 +27,7 @@ size_t HanportMessageValidator::extract_message(){
     size_t exclamation_pos = 0;
     bool found = false;
     for(size_t i = 0; i < this->raw_hp_message.size(); i++){
+        std::cout << this->raw_hp_message[i] << std::endl;
         if(this->raw_hp_message[i] == '!'){
             exclamation_pos = i;
             found = true;

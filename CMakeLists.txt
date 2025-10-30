@@ -8,5 +8,13 @@ set(CMAKE_CXX_STANDRARD 17)
 set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -Wall -Wextra")
 
+include(FetchContent)
+FetchContent_Declare(
+    CppLinuxSerial
+    GIT_REPOSITORY https://github.com/gbmhunter/CppLinuxSerial.git
+    GIT_TAG master
+)
+FetchContent_MakeAvailable(CppLinuxSerial)
+
 add_subdirectory(include)
 add_subdirectory(src)

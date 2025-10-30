@@ -1,5 +1,7 @@
 #include "hpSerialRead.hpp"
 #include <iostream>
+#include <cstdint>
+
 
 hpSerialRead::hpSerialRead(std::string filepath){
     this->filepath=filepath;
