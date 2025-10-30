@@ -33,7 +33,7 @@ void hpSerialRead::setupPort(){
 
 }
 void hpSerialRead::closePort(){
-
+    close(serial_fd);
 }
 void hpSerialRead::hpSetupCflag(struct termios *tty){
     tty->c_cflag &= ~PARENB; //disable parity bit 
