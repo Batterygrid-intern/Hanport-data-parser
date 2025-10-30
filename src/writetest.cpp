@@ -24,5 +24,7 @@
        serialport.SetTimeout(25000);
        serialport.Open();
        serialport.WriteBinary(datatest);
+       while(true){
+       }
 
    } 

@@ -2,7 +2,7 @@
 #include <iostream>
 #include <cstdint>
 
-
+/*READ FROM FILE*/
 hpSerialRead::hpSerialRead(std::string filepath){
     this->filepath=filepath;
 }
