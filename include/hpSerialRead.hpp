@@ -29,7 +29,7 @@ class hpSerialRead{
     void openPort();
     void setupPort();
     void closePort();
-    std::vector<uint8_t> read();
+    std::vector<uint8_t> hpRead();
    
 
 

@@ -30,7 +30,6 @@ void hpSerialRead::setupPort(){
     if(tcsetattr(this->serial_fd,TCSANOW,&this->tty) != 0){
         throw std::runtime_error("Failed to set attribute to serial port");
     }
-
 }
 void hpSerialRead::closePort(){
     close(serial_fd);
@@ -47,18 +46,21 @@ void hpSerialRead::hpSetupCflag(struct termios *tty){
 void hpSerialRead::hpSetupLflag(struct termios *tty){
     tty->c_lflag &= ~ICANON; //disable icanonical mode so that we dont process data line på line and so that we gather everything sent and do not treat special characters differently, in canonical inpus is prossesed when a new line is recieved
     tty->c_lflag &= ~ISIG; //Disable interupts quit and suspends like ctrl-C
-
 }
 void hpSerialRead::hpSetupIflag(struct termios *tty){
     tty->c_iflag &= ~(IXON | IXOFF | IXANY);                                      // disable flow controls allow for raw serial input to be read.
     tty->c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL); //Disable any special handling of recived bytes    
-
 }
 void hpSerialRead::hpSetupCc(struct termios *tty){
     tty->c_cc[VTIME] = 255;
     tty->c_cc[VMIN] = 0;
 }
-
+std::vector<uint8_t> hpSerialRead::hpRead(){
+char read_buff[1000];
+   // num_of_bytes will be how many bytes that is read, 0 if no bytes recived and negativ if error occured
+   int num_of_bytes = read(this->serial_fd,&read_buff,sizeof(read_buff));
+   printf("%s",read_buff);
+}
 
 
 
