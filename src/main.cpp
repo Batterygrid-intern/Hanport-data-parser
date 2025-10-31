@@ -9,16 +9,11 @@
 #include <thread>
 #include <chrono>
 #include <cstdint>
-#include <CppLinuxSerial/SerialPort.hpp>
 #ifndef EX_DATA_PATH
 #define EX_DATA_PATH "ex_data"
 #endif
 #ifndef MAX_TRIES
 #define MAX_TRIES 5
-#endif
-
-#ifndef SERIAL_PORT 
-#define SERIAL_PORT "/dev/ttyAMA0"
 #endif
 
 //debugging GDB 
@@ -61,10 +56,10 @@ int main(/*int argc, char** argv*/){
     hpData data_obj;
     std::vector<uint8_t> raw_hp_message;
     //open serial port
-    
-    hpSerialRead serial_reader(SERIAL_PORT_PATH);
+    const char* SERIAL_PORT = "/dev/ttyAMA0";
+    hpSerialRead serial_reader();
     try{
-      serial_reader.open_fd();
+      serial_reader.open_fd(SERIAL_PORT);
     }
     catch(std::exception& e){
       std::cerr << "\nError " << e.what() << "\n";

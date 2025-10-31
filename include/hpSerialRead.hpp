@@ -7,11 +7,9 @@
 #include <fcntl.h>
 
 #define BAUD_RATE B1152000
-#define SERIAL_PORT_PATH "/dev/ttyAMA0"
 
 class hpSerialRead{
     private:
-    char* serial_port_path;
     struct termios tty;
     int serial_fd = -1;
     std::vector<uint8_t> complete_data_message;
@@ -23,10 +21,9 @@ class hpSerialRead{
     void hpSetupCc(struct termios *tty);
 
     public:
-
     hpSerialRead();
     ~hpSerialRead();
-    void openPort();
+    void openPort(const char* serial_port_path);
     void setupPort();
     void closePort();
     std::vector<uint8_t> hpRead();

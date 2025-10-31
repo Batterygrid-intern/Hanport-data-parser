@@ -2,15 +2,13 @@
 #include <iostream>
 #include <cstdint>
 
+hpSerialRead::hpSerialRead(){}
 
-hpSerialRead::hpSerialRead(char* serial_port_path){
-    this->serial_port_path = serial_port_path;
-}
 hpSerialRead::~hpSerialRead(){
     closePort();
 } 
-void hpSerialRead::openPort(){
-    this->serial_fd = open(this->serial_port_path,O_RDONLY);
+void hpSerialRead::openPort(const char* serial_port_path){
+    this->serial_fd = open(serial_port_path,O_RDONLY);
     if(this->serial_fd < 0){
         throw std::runtime_error("failed to open file descriptor");
     }
