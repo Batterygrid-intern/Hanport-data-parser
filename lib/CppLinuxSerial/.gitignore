@@ -1,0 +1,12 @@
+build/
+cmake-build-debug/
+.idea/workspace.xml
+.vscode/
+
+# Sphinx build dir
+docs/_build/
+
+# Build artifacts
+a.out
+test/arduino/test
+*.swp

@@ -65,50 +65,55 @@ int main(/*int argc, char** argv*/){
     catch (std::exception &e){
       std::cerr << "\nError " << e.what() << "\n";
     }
+  
+    raw_hp_message = serial_reader.hpRead();
+    for (uint8_t &i : raw_hp_message)
+    {
+      std::cout << i;
+    }
+      std::cout << std::endl;
 
     while(failed_readings < 5){
-      std::this_thread::sleep_for(std::chrono::seconds(10));
-      raw_hp_message = serial_reader.hpRead();
-      for (uint8_t &i : raw_hp_message){
-        std::cout << i;
-      }
-      std::cout << std::endl;
+      
       std::vector<std::string> message_array;
       // just for use when testing
       // try to validate the data if failed catch exceptions thrown inside HanportMessageValidator class.
-      try
-      {        // instantiate message_validator object with transmitted raw data from serial port exceptions will be thrown if construction fails
-        HanportMessageValidator message_validator(raw_hp_message);
-        // compare the crc calculated inside the constructor with the transmitted crc extracted from the message
-        if (message_validator.get_calculated_crc() != message_validator.get_transmitted_crc())
-        {
-          std::cout << "Calucalted CRC = " << std::hex << std::showbase << message_validator.get_calculated_crc() << "\nTransmitted CRC = " << message_validator.get_transmitted_crc() << std::dec << std::noshowbase << "\n";
-          throw std::runtime_error("Data invalid: calculated crc  not equal to transmitted crc");
+      if(!raw_hp_message.empty()){
+        try
+        { // instantiate message_validator object with transmitted raw data from serial port exceptions will be thrown if construction fails
+          HanportMessageValidator message_validator(raw_hp_message);
+          // compare the crc calculated inside the constructor with the transmitted crc extracted from the message
+          if (message_validator.get_calculated_crc() != message_validator.get_transmitted_crc())
+          {
+            std::cout << "Calucalted CRC = " << std::hex << std::showbase << message_validator.get_calculated_crc() << "\nTransmitted CRC = " << message_validator.get_transmitted_crc() << std::dec << std::noshowbase << "\n";
+            throw std::runtime_error("Data invalid: calculated crc  not equal to transmitted crc");
+          }
+          std::cout << "Calucalted CRC = " << std::hex << std::setiosflags(std::ios::showbase) << message_validator.get_calculated_crc() << "\nTransmitted CRC = " << message_validator.get_transmitted_crc() << std::dec << std::noshowbase << "\n";
+          std::cout << "Data is valid" << std::endl;
+          // from message_validator return a string array for the data to be parsed
+          message_array = message_validator.message_to_string_arr();
         }
-        std::cout << "Calucalted CRC = " << std::hex << std::setiosflags(std::ios::showbase) << message_validator.get_calculated_crc() << "\nTransmitted CRC = " << message_validator.get_transmitted_crc() << std::dec << std::noshowbase << "\n";
-        std::cout << "Data is valid" << std::endl;
-        // from message_validator return a string array for the data to be parsed
-        message_array = message_validator.message_to_string_arr();
-      }
-      // catch exceptions thrown inside message_validator
-      catch (const std::exception &e)
-      {
-        std::cerr << "\nError " << e.what() << "\n";
-        failed_readings++;
-        continue;
-      }
-      // initalise message_parser
-      // save parsed data in data object.
-      try
-      {
-        hpDataParser message_parser(message_array);
-        message_parser.parse_message(data_obj);
-        std::cout << "active energy export: " << data_obj.active_enery_import_total << " kw" << std::endl;
-      }
-      catch (const std::exception &e)
-      {
-        std::cerr << "\nError " << e.what() << "\n";
-        failed_readings++;
+        // catch exceptions thrown inside message_validator
+        catch (const std::exception &e)
+        {
+          std::cerr << "\nError " << e.what() << "\n";
+          failed_readings++;
+          continue;
+        }
+        // initalise message_parser
+        // save parsed data in data object.
+        try
+        {
+          hpDataParser message_parser(message_array);
+          message_parser.parse_message(data_obj);
+          std::cout << "active energy export: " << data_obj.active_enery_import_total << " kw" << std::endl;
+        }
+        catch (const std::exception &e)
+        {
+          std::cerr << "\nError " << e.what() << "\n";
+          failed_readings++;
+        }
+        raw_hp_message.clear();
       }
     }
     return 0;
