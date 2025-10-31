@@ -17,6 +17,10 @@
 #define MAX_TRIES 5
 #endif
 
+#ifndef SERIAL_PORT 
+#define SERIAL_PORT "/dev/ttyAMA0"
+#endif
+
 //debugging GDB 
 //
 
@@ -56,9 +60,17 @@ int main(/*int argc, char** argv*/){
     int failed_readings = 0;
     hpData data_obj;
     std::vector<uint8_t> raw_hp_message;
-    while (failed_readings < MAX_TRIES)
-    {
-      // array for raw message read from serial port && array of strings to store the data line by line for data_parsing
+    //open serial port
+    
+    hpSerialRead serial_reader(SERIAL_PORT_PATH);
+    try{
+      serial_reader
+
+    }
+
+    
+    while(failed_readings < 5){ 
+   
       std::vector<std::string> message_array;
       // just for use when testing
       std::this_thread::sleep_for(std::chrono::seconds(2));
