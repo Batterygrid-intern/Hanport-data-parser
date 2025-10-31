@@ -54,6 +54,15 @@ void hpSerialRead::hpSetupCc(struct termios *tty){
 }
 std::vector<uint8_t> hpSerialRead::hpRead(){
     char read_buff[1000];
+    char read_chunk[100];
+
+    läs från seriel porten 
+    if / dycker upp
+    läs raden 
+    lägg in raden i read_buff
+    läs nästa rad kolla 
+    inserta i readbuf
+
     // num_of_bytes will be how many bytes that is read, 0 if no bytes recived and negativ if error occured
     int num_of_bytes = read(this->serial_fd, &read_buff, sizeof(read_buff));
     sleep(2); //required to make flush work, for some reason
