@@ -78,7 +78,7 @@ int main(/*int argc, char** argv*/){
       std::vector<std::string> message_array;
       // just for use when testing
       // try to validate the data if failed catch exceptions thrown inside HanportMessageValidator class.
-      if(!raw_hp_message.empty()){
+      if(!raw_hp_message.empty())//find '!'?{
         try
         { // instantiate message_validator object with transmitted raw data from serial port exceptions will be thrown if construction fails
           HanportMessageValidator message_validator(raw_hp_message);
