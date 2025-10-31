@@ -1,7 +1,6 @@
 #include <iostream>
 #include <vector>
 #include <cstdint>
-#include "hpSerialRead.hpp"
 #include "CppLinuxSerial/SerialPort.hpp"
 #include "filereader.hpp"
 #include <thread>  
@@ -23,7 +22,11 @@
        serialport.SetTimeout(25000);
        serialport.Open();
        while(true){
-         std::this_thread::sleep_for(std::chrono::seconds(10));
-         serialport.WriteBinary(datatest);
+       std::this_thread::sleep_for(std::chrono::seconds(10));
+       serialport.WriteBinary(datatest);
+       for(auto &i : datatest){
+        std::cout << i ;
+       }
+       std::cout << std::endl;
        }
   }

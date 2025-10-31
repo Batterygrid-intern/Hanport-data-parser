@@ -21,7 +21,7 @@ class hpSerialRead{
     void hpSetupCc(struct termios *tty);
 
     public:
-    hpSerialRead();
+    hpSerialRead() = default;
     ~hpSerialRead();
     void openPort(const char* serial_port_path);
     void setupPort();

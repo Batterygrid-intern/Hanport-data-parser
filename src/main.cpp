@@ -57,25 +57,27 @@ int main(/*int argc, char** argv*/){
     std::vector<uint8_t> raw_hp_message;
     //open serial port
     const char* SERIAL_PORT = "/dev/ttyAMA0";
-    hpSerialRead serial_reader();
+    //construct serial_reader with default attributes.
+    hpSerialRead serial_reader;
     try{
-      serial_reader.open_fd(SERIAL_PORT);
+      serial_reader.openPort(SERIAL_PORT);
     }
-    catch(std::exception& e){
+    catch (std::exception &e){
       std::cerr << "\nError " << e.what() << "\n";
     }
 
-
-    
-    while(failed_readings < 5){ 
-   
+    while(failed_readings < 5){
+      std::this_thread::sleep_for(std::chrono::seconds(10));
+      raw_hp_message = serial_reader.hpRead();
+      for (uint8_t &i : raw_hp_message){
+        std::cout << i;
+      }
+      std::cout << std::endl;
       std::vector<std::string> message_array;
       // just for use when testing
-      std::this_thread::sleep_for(std::chrono::seconds(2));
       // try to validate the data if failed catch exceptions thrown inside HanportMessageValidator class.
       try
-      {
-        // instantiate message_validator object with transmitted raw data from serial port exceptions will be thrown if construction fails
+      {        // instantiate message_validator object with transmitted raw data from serial port exceptions will be thrown if construction fails
         HanportMessageValidator message_validator(raw_hp_message);
         // compare the crc calculated inside the constructor with the transmitted crc extracted from the message
         if (message_validator.get_calculated_crc() != message_validator.get_transmitted_crc())

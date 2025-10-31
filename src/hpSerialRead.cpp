@@ -2,7 +2,6 @@
 #include <iostream>
 #include <cstdint>
 
-hpSerialRead::hpSerialRead(){}
 
 hpSerialRead::~hpSerialRead(){
     closePort();
@@ -54,9 +53,13 @@ void hpSerialRead::hpSetupCc(struct termios *tty){
     tty->c_cc[VMIN] = 0;
 }
 std::vector<uint8_t> hpSerialRead::hpRead(){
-char read_buff[1000];
-   // num_of_bytes will be how many bytes that is read, 0 if no bytes recived and negativ if error occured
-   int num_of_bytes = read(this->serial_fd,&read_buff,sizeof(read_buff));
-   printf("%s",read_buff);
-}
+    char read_buff[1000];
+    // num_of_bytes will be how many bytes that is read, 0 if no bytes recived and negativ if error occured
+    int num_of_bytes = read(this->serial_fd, &read_buff, sizeof(read_buff));
+    sleep(2); //required to make flush work, for some reason
+    tcflush(this->serial_fd, TCIOFLUSH);
+    std::vector<uint8_t> raw_data;
+    raw_data.assign(read_buff, read_buff + num_of_bytes);
 
+    return raw_data;
+}
