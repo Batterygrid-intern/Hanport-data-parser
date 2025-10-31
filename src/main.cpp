@@ -64,9 +64,12 @@ int main(/*int argc, char** argv*/){
     
     hpSerialRead serial_reader(SERIAL_PORT_PATH);
     try{
-      serial_reader
-
+      serial_reader.open_fd();
     }
+    catch(std::exception& e){
+      std::cerr << "\nError " << e.what() << "\n";
+    }
+
 
     
     while(failed_readings < 5){ 
