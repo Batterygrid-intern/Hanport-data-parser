@@ -2,6 +2,7 @@
 #include "hpDataParser.hpp"
 #include "hpData.hpp"
 #include "hpSerialRead.hpp"
+#include "filereader.hpp"
 #include <iostream>
 #include <cstdlib>
 #include <iomanip>
@@ -51,30 +52,10 @@
 /*1. write comments and document application
  */
 int main(/*int argc, char** argv*/){
-    //variable to calculate how many failed validations that is made
+    //variable to calculate how many failed validations that has occured
     int failed_readings = 0;
     hpData data_obj;
-    hpSerialRead data_reader("./bin/../exampledata/meter_data.bin");
-    std::ifstream fd = data_reader.open_fd();
-    /*TEST code 
-    ************************************************************************************/
-    data_reader.read_from_fd(fd);
-    //initialize serialport object to read and write data to serial port
-    mn::CppLinuxSerial::SerialPort serialport("/dev/ttyAMA0",
-      mn::CppLinuxSerial::BaudRate::B_115200,
-      mn::CppLinuxSerial::NumDataBits::EIGHT,
-      mn::CppLinuxSerial::Parity::NONE,
-      mn::CppLinuxSerial::NumStopBits::ONE);
-    //open serial port and write to serial port
-    std::vector<uint8_t> datatest = data_reader.getdata();
-
-    serialport.SetTimeout(25000);
-    serialport.Open();
-    serialport.WriteBinary(datatest);
-
     std::vector<uint8_t> raw_hp_message;
-    //serialport.ReadBinary(raw_hp_message);
-    //*******************************************************************'''' */
     while (failed_readings < MAX_TRIES)
     {
       // array for raw message read from serial port && array of strings to store the data line by line for data_parsing

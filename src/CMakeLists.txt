@@ -14,6 +14,11 @@ target_include_directories(hpSerialRead
     PUBLIC ${CMAKE_SOURCE_DIR}/include
 )
 
+add_library(filereader STATIC filereader.cpp)
+target_include_directories(filereader
+    PUBLIC ${CMAKE_SOURCE_DIR}/include
+)
+
 # build executable and link to libraries
 add_executable(${PROJECT_NAME} main.cpp)
 add_compile_definitions(EX_DATA_PATH=\"$ENV{ex_data}\")
@@ -24,15 +29,15 @@ target_link_libraries(${PROJECT_NAME}
     hpSerialRead
     CppLinuxSerial
 )
-add_executable(writetest writetest.cpp)
-target_link_libraries(writetest
-    CppLinuxSerial
-    hpSerialRead
-)
+#add_executable(writetest writetest.cpp)
+#target_link_libraries(writetest
+#    CppLinuxSerial
+#    hpSerialRead
+#)
 
 
-add_executable(readtest readtest.cpp)
-target_link_libraries(readtest
-    CppLinuxSerial
-)
+#add_executable(readtest readtest.cpp)
+#target_link_libraries(readtest
+#    CppLinuxSerial
+#)
 
