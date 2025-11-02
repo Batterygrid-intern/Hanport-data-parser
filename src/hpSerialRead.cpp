@@ -56,26 +56,26 @@ void hpSerialRead::hpSetupCc(struct termios *tty){
     tty->c_cc[VTIME] = 255;
     tty->c_cc[VMIN] = 0;
 }
-std::vector<uint8_t> hpSerialRead::hpRead(){
+std::vector<uint8_t> hpSerialRead::hpRead()
+{
     //buffer to read chunks of bytes into.
-    unit8_t read_buff[256];
+    uint8_t read_buff[256];
     //condition if we are reading a message or not
     bool reading_message = false;
     bool end_found = false;
+    int crc_bytes_read = 0;
     const int CRC_SIZE = 2;
-    const size_t MAX_MESSAGE_SIZE = 1000;
     std::vector<uint8_t> message;
 
     while(true)
-    { 
-        int num_of_bytes = read(this->serial_fd, read_buf, sizeof(read_buff));
+    {
+        int num_of_bytes = read(this->serial_fd, read_buff, sizeof(read_buff));
 
         //add throw here insted.
         if(num_of_bytes <= 0 ) 
         {
            continue; 
         }
-        
         for (int i = 0; i < num_of_bytes; i++) 
         {
             uint8_t byte = read_buff[i];
@@ -84,17 +84,17 @@ std::vector<uint8_t> hpSerialRead::hpRead(){
                 message.clear();
                 message.push_back(byte);
                 reading_message = true;
-                found_end = false;
+                end_found = false;
                 crc_bytes_read = 0;
                 continue;
             }
             if(byte == '!' && reading_message && !end_found)
             {   message.push_back(byte);
-                found_end = true;
+                end_found = true;
                 crc_bytes_read = 0;
                 continue;
             }
-            if(found_end)
+            if(end_found)
             {
                 message.push_back(byte);
                 crc_bytes_read++;
@@ -104,7 +104,7 @@ std::vector<uint8_t> hpSerialRead::hpRead(){
                 }
                 continue;
 
-            }
+            } 
             if(reading_message)
             {
                 message.push_back(byte);
