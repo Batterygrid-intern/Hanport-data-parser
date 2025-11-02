@@ -64,21 +64,24 @@ std::vector<uint8_t> hpSerialRead::hpRead()
     bool reading_message = false;
     bool end_found = false;
     int crc_bytes_read = 0;
-    const int CRC_SIZE = 2;
+    //protocol sas 2 bytes but im not getting the full message when just extracting 4 bytes
+    const int CRC_SIZE = 4;
     std::vector<uint8_t> message;
-
+    //continously read from the serial buffer
     while(true)
-    {
+    {   
+        //read chunks from the serial buffer into read buffer
         int num_of_bytes = read(this->serial_fd, read_buff, sizeof(read_buff));
-
-        //add throw here insted.
+        //if no bytes are read continue reading
         if(num_of_bytes <= 0 ) 
         {
            continue; 
         }
+        //for each chunk read, iterate through and look for start and end positions and push back all chunks read into message buffer if its reading hpmessge
         for (int i = 0; i < num_of_bytes; i++) 
-        {
+        {   //extract each byte read
             uint8_t byte = read_buff[i];
+            //compare to look for starting delimiter
             if(byte == '/')
             {  
                 message.clear();
@@ -88,12 +91,14 @@ std::vector<uint8_t> hpSerialRead::hpRead()
                 crc_bytes_read = 0;
                 continue;
             }
+            //identify end of message marker and tell to start reading crc part
             if(byte == '!' && reading_message && !end_found)
             {   message.push_back(byte);
-                end_found = true;
+                end_found = true;progra
                 crc_bytes_read = 0;
                 continue;
             }
+            //read crcpart and return the vector array
             if(end_found)
             {
                 message.push_back(byte);
@@ -105,6 +110,7 @@ std::vector<uint8_t> hpSerialRead::hpRead()
                 continue;
 
             } 
+            //add bytes within message to message array
             if(reading_message)
             {
                 message.push_back(byte);
