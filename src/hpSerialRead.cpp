@@ -9,6 +9,9 @@ hpSerialRead::~hpSerialRead(){
 } 
 void hpSerialRead::openPort(const char* serial_port_path){
     this->serial_fd = open(serial_port_path,O_RDONLY);
+    sleep(2);
+    tcflush(this->serial_fd, TCIOFLUSH);
+
     if(this->serial_fd < 0){
         throw std::runtime_error("failed to open file descriptor");
     }
@@ -54,24 +57,58 @@ void hpSerialRead::hpSetupCc(struct termios *tty){
     tty->c_cc[VMIN] = 0;
 }
 std::vector<uint8_t> hpSerialRead::hpRead(){
-    char read_buff[1000];
-    char read_chunk[100];
+    //buffer to read chunks of bytes into.
+    unit8_t read_buff[256];
+    //condition if we are reading a message or not
+    bool reading_message = false;
+    bool end_found = false;
+    const int CRC_SIZE = 2;
+    const size_t MAX_MESSAGE_SIZE = 1000;
+    std::vector<uint8_t> message;
 
+    while(true)
+    { 
+        int num_of_bytes = read(this->serial_fd, read_buf, sizeof(read_buff));
 
-    läs från seriel porten 
-    if / dycker upp
-    läs raden 
-    lägg in raden i read_buff
-    läs nästa rad kolla 
-    inserta i readbuf
-    tills ! dycker upp
+        //add throw here insted.
+        if(num_of_bytes <= 0 ) 
+        {
+           continue; 
+        }
+        
+        for (int i = 0; i < num_of_bytes; i++) 
+        {
+            uint8_t byte = read_buff[i];
+            if(byte == '/')
+            {  
+                message.clear();
+                message.push_back(byte);
+                reading_message = true;
+                found_end = false;
+                crc_bytes_read = 0;
+                continue;
+            }
+            if(byte == '!' && reading_message && !end_found)
+            {   message.push_back(byte);
+                found_end = true;
+                crc_bytes_read = 0;
+                continue;
+            }
+            if(found_end)
+            {
+                message.push_back(byte);
+                crc_bytes_read++;
+                if(crc_bytes_read == CRC_SIZE)
+                {
+                    return message;
+                }
+                continue;
 
-    // num_of_bytes will be how many bytes that is read, 0 if no bytes recived and negativ if error occured
-    int num_of_bytes = read(this->serial_fd, &read_buff, sizeof(read_buff));
-    sleep(2); //required to make flush work, for some reason
-    tcflush(this->serial_fd, TCIOFLUSH);
-    std::vector<uint8_t> raw_data;
-    raw_data.assign(read_buff, read_buff + num_of_bytes);
-
-    return raw_data;
+            }
+            if(reading_message)
+            {
+                message.push_back(byte);
+            }
+        }
+    }
 }
