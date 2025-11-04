@@ -11,7 +11,7 @@ This will read `count` registers starting at `start` and print them. If `count` 
 the client will print pairs as 32-bit IEEE floats (high-word then low-word).
 """
 import argparse
-from pymodbus.client.sync import ModbusTcpClient
+from pymodbus.client import ModbusTcpClient
 import struct
 
 
