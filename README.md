@@ -169,6 +169,102 @@ sudo journalctl -fu hanport.service
 
 If you want I can add `enable_testing()` to CMake, include a systemd unit file in the repo under `extras/`, or make the register layout configurable.
 
+## Client testing (from your PC)
+
+You can test the Modbus server running on the Raspberry Pi from your PC using either the provided Python client or the C++ client binary.
+
+Python client (recommended quick test)
+
+- Requirements: Python 3 and `pymodbus`.
+
+```bash
+pip3 install pymodbus
+# Example: read 2 registers starting at address 2 from a Pi at 192.168.1.10
+python3 scripts/modbus_client.py --host 192.168.1.10 --port 1502 --start 2 --count 2
+```
+
+Output will list each register and, for register pairs, decode them as 32-bit IEEE floats (high-word then low-word). Example:
+
+```
+Read 2 registers starting at 2
+R[2] = 16452
+R[3] = 49396
+Float @ 2..3 = 6678.39
+```
+
+C++ client (no Python dependency)
+
+Build step (already part of normal project build):
+
+```bash
+cmake -S . -B build
+cmake --build build -j$(nproc)
+```
+
+Run the C++ client binary on any machine with libmodbus (or copy the binary from the Pi):
+
+```bash
+./bin/modbus_client 192.168.1.10 1502 2 2
+```
+
+This prints the raw 16-bit register values and decodes pairs as floats similarly to the Python client.
+
+Notes
+- The clients assume the server uses Modbus unit id 1. If you change the unit id in the server, update the clients accordingly.
+- The float decoding uses high‑word then low‑word order (the same order used by `hpModbuss`). If your Modbus consumer expects a different word order, we can add a command-line option to the clients to swap words/bytes.
+- If you cannot install `pymodbus` on your PC, I can add a tiny pure-socket Python client to the repo that performs the same read (no external dependency).
+
+## Firewall & network guidance
+
+If your Raspberry Pi is connected to a local network and you want to allow remote clients (PCs, HMIs, SCADA) to connect to the Modbus TCP server, you may need to open the Modbus port in the Pi's firewall. Below are example commands for common setups.
+
+Prefer using a non‑privileged port (default in this project: 1502). If you bind to port 502 (the Modbus standard), you'll need root or CAP_NET_BIND_SERVICE.
+
+UFW (Ubuntu / Raspberry Pi OS with ufw)
+
+```bash
+sudo ufw allow 1502/tcp        # allow Modbus TCP on port 1502
+sudo ufw status verbose
+```
+
+iptables (legacy)
+
+```bash
+sudo iptables -A INPUT -p tcp --dport 1502 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+# Save rules persistently (Debian/Ubuntu)
+sudo apt install -y iptables-persistent
+sudo netfilter-persistent save
+```
+
+nftables (modern Linux)
+
+```bash
+# add a rule to the inet filter table (adjust to your nftables config)
+sudo nft add rule inet filter input tcp dport 1502 ct state { new, established } accept
+```
+
+Router / NAT
+
+- If you want to access the Pi from outside your LAN you will need to add a port-forward on your router from the WAN to the Pi's LAN IP. Be careful exposing Modbus to the public internet — prefer a VPN.
+
+Quick connectivity tests
+
+- Check port reachability from your PC:
+
+```bash
+nc -vz 192.168.1.10 1502
+# or use telnet/nc to test TCP connect
+```
+
+- Use the Python client or C++ client to perform an actual Modbus read (examples above). If the connect fails, verify firewall rules, Pi IP, and that the server is running.
+
+Security notes
+
+- Do not expose Modbus directly to the public internet without a VPN, firewall rules, and proper authentication layers — Modbus itself does not provide robust authentication or encryption.
+- If you must expose the service, consider tunneling over SSH or using a VPN (WireGuard/OpenVPN).
+
+
+
 
 
 

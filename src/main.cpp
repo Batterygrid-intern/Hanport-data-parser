@@ -52,8 +52,29 @@
 /***********************************************************************/
 /*1. write comments and document application
  */
-int main(/*int argc, char** argv*/)
+int main(int argc, char** argv)
 {
+  // parse command line options
+  int port = 1502; // default non-privileged port
+  for (int i = 1; i < argc; ++i) {
+    std::string a(argv[i]);
+    if (a == "--port" || a == "-p") {
+      if (i + 1 >= argc) {
+        std::cerr << "Missing value for --port\n";
+        return 1;
+      }
+      try {
+        port = std::stoi(argv[++i]);
+      } catch (...) {
+        std::cerr << "Invalid port value\n";
+        return 1;
+      }
+    } else if (a == "--help" || a == "-h") {
+      std::cout << "Usage: " << argv[0] << " [--port <port>]\n";
+      return 0;
+    }
+  }
+
   // variable to calculate how many failed validations that has occured
   int failed_readings = 0;
   hpData data_obj;
@@ -62,11 +83,13 @@ int main(/*int argc, char** argv*/)
   const char *SERIAL_PORT = "/dev/ttyAMA0";
   // construct serial_reader with default attributes.
   hpSerialRead serial_reader;
+  // heartbeat counter (ticks every loop cycle) - will be stored in time_stamp
+  float heartbeat = 0.0f;
   // start modbus server to expose hpData on registers
-  hpModbuss modbus_server(1502);
+  hpModbuss modbus_server(static_cast<uint16_t>(port));
   try {
     modbus_server.start();
-    std::cout << "Modbus server started on port 1502\n";
+    std::cout << "Modbus server started on port " << port << "\n";
   } catch (const std::exception &e) {
     std::cerr << "Failed to start modbus server: " << e.what() << "\n";
     // continue without modbus, main functionality still runs
@@ -82,6 +105,8 @@ int main(/*int argc, char** argv*/)
 
   while (true)
   {
+    // tick heartbeat once per loop iteration
+    heartbeat += 1.0f;
     raw_hp_message = serial_reader.hpRead();
     for (uint8_t &i : raw_hp_message)
     {
@@ -121,64 +146,71 @@ int main(/*int argc, char** argv*/)
       {
         hpDataParser message_parser(message_array);
         message_parser.parse_message(data_obj);
+        // store heartbeat in time_stamp so it is exposed via Modbus registers
+        data_obj.time_stamp = heartbeat;
         std::cout << "active energy export: " << data_obj.active_enery_import_total << " kw" << std::endl;
-    // map important hpData floats into modbus holding registers as 32-bit floats
-    // helper: convert float to two uint16_t (big-endian register order)
-    auto float_to_regs = [](float f){
-      uint32_t u = 0;
-      static_assert(sizeof(float) == 4, "float must be 32-bit");
-      std::memcpy(&u, &f, sizeof(u));
-      uint16_t high = static_cast<uint16_t>((u >> 16) & 0xFFFF);
-      uint16_t low  = static_cast<uint16_t>(u & 0xFFFF);
-      return std::vector<uint16_t>{high, low};
-    };
+        // map important hpData floats into modbus holding registers as 32-bit floats
+        // helper: convert float to two uint16_t (big-endian register order)
+        auto float_to_regs = [](float f)
+        {
+          uint32_t u = 0;
+          static_assert(sizeof(float) == 4, "float must be 32-bit");
+          std::memcpy(&u, &f, sizeof(u));
+          uint16_t high = static_cast<uint16_t>((u >> 16) & 0xFFFF);
+          uint16_t low = static_cast<uint16_t>(u & 0xFFFF);
+          return std::vector<uint16_t>{high, low};
+        };
 
-    std::vector<uint16_t> regs;
-    // order: time_stamp, active_enery_import_total, active_energy_export_total,
-    // reactive_import, reactive_export, active_power_import, active_power_export
-    auto append_float = [&](float v){
-      auto r = float_to_regs(v);
-      regs.insert(regs.end(), r.begin(), r.end());
-    };
+        std::vector<uint16_t> regs;
+        // order: time_stamp, active_enery_import_total, active_energy_export_total,
+        // reactive_import, reactive_export, active_power_import, active_power_export
+        auto append_float = [&](float v)
+        {
+          auto r = float_to_regs(v);
+          regs.insert(regs.end(), r.begin(), r.end());
+        };
 
-    append_float(data_obj.time_stamp);
-    append_float(data_obj.active_enery_import_total);
-    append_float(data_obj.active_energy_export_total);
-    append_float(data_obj.reactive_energy_import_total);
-    append_float(data_obj.reactive_energy_export_total);
-    append_float(data_obj.active_power_import);
-    append_float(data_obj.active_power_export);
-    append_float(data_obj.reactive_power_import);
-    append_float(data_obj.reactive_power_export);
-    // per-phase active power
-    append_float(data_obj.l1_active_power_import);
-    append_float(data_obj.l1_active_power_export);
-    append_float(data_obj.l2_active_power_import);
-    append_float(data_obj.l2_active_power_export);
-    append_float(data_obj.l3_active_power_import);
-    append_float(data_obj.l3_active_power_export);
-    // per-phase reactive power
-    append_float(data_obj.l1_reactive_power_import);
-    append_float(data_obj.l1_reactive_power_export);
-    append_float(data_obj.l2_reactive_power_import);
-    append_float(data_obj.l2_reactive_power_export);
-    append_float(data_obj.l3_reactive_power_import);
-    append_float(data_obj.l3_reactive_power_export);
-    // voltages
-    append_float(data_obj.l1_voltage_rms);
-    append_float(data_obj.l2_voltage_rms);
-    append_float(data_obj.l3_voltage_rms);
-    // currents
-    append_float(data_obj.l1_current_rms);
-    append_float(data_obj.l2_current_rms);
-    append_float(data_obj.l3_current_rms);
+        append_float(data_obj.time_stamp);
+        append_float(data_obj.active_enery_import_total);
+        append_float(data_obj.active_energy_export_total);
+        append_float(data_obj.reactive_energy_import_total);
+        append_float(data_obj.reactive_energy_export_total);
+        append_float(data_obj.active_power_import);
+        append_float(data_obj.active_power_export);
+        append_float(data_obj.reactive_power_import);
+        append_float(data_obj.reactive_power_export);
+        // per-phase active power
+        append_float(data_obj.l1_active_power_import);
+        append_float(data_obj.l1_active_power_export);
+        append_float(data_obj.l2_active_power_import);
+        append_float(data_obj.l2_active_power_export);
+        append_float(data_obj.l3_active_power_import);
+        append_float(data_obj.l3_active_power_export);
+        // per-phase reactive power
+        append_float(data_obj.l1_reactive_power_import);
+        append_float(data_obj.l1_reactive_power_export);
+        append_float(data_obj.l2_reactive_power_import);
+        append_float(data_obj.l2_reactive_power_export);
+        append_float(data_obj.l3_reactive_power_import);
+        append_float(data_obj.l3_reactive_power_export);
+        // voltages
+        append_float(data_obj.l1_voltage_rms);
+        append_float(data_obj.l2_voltage_rms);
+        append_float(data_obj.l3_voltage_rms);
+        // currents
+        append_float(data_obj.l1_current_rms);
+        append_float(data_obj.l2_current_rms);
+        append_float(data_obj.l3_current_rms);
 
-    // write into modbus server holding registers starting at address 0
-    try {
-      modbus_server.set_holding_registers(0, regs);
-    } catch (const std::exception &e) {
-      std::cerr << "Failed to update modbus registers: " << e.what() << "\n";
-    }
+        // write into modbus server holding registers starting at address 0
+        try
+        {
+          modbus_server.set_holding_registers(0, regs);
+        }
+        catch (const std::exception &e)
+        {
+          std::cerr << "Failed to update modbus registers: " << e.what() << "\n";
+        }
       }
       catch (const std::exception &e)
       {
