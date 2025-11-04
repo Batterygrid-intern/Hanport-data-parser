@@ -20,10 +20,154 @@ used to transmitt data.
 
 # Things to look at
 - interfacing
-- classes
-- inheritence
-- polymorphism
-- Try throw catch
+# Hanport data parser + Modbus bridge
+
+This project reads Hanport/P1 style meter messages from a serial device, validates and parses the data into a structured `hpData` object and exposes selected fields over a Modbus TCP server.
+
+The repository now contains:
+
+- reader and validator: `hpMessageValidator`
+- parser: `hpDataParser` -> fills `hpData` (floats for energy, power, voltage, current, ...)
+- serial helper: `hpSerialRead` (wraps CppLinuxSerial)
+- Modbus TCP server wrapper: `hpModbuss` (uses libmodbus)
+- an example CLI: `bin/modbus_example`
+- the main program: `bin/test` (starts modbus server and updates registers)
+- integration test: `bin/modbus_integration_test` (gtest)
+
+## Prerequisites (Raspberry Pi)
+
+- Raspberry Pi OS (or Debian-based)
+- Build tools and headers: `build-essential`, `cmake`, `pkg-config`, `libmodbus-dev`
+- Optional test client: `mbpoll` (or use the bundled `modbus_example`)
+- Access to the serial device (add the running user to `dialout` group)
+
+Install example:
+
+```bash
+sudo apt update
+sudo apt install -y build-essential cmake pkg-config libmodbus-dev
+sudo usermod -aG dialout $USER
+```
+
+If you use the Pi UART (ttyAMA0 / serial0) ensure the serial console is disabled (`raspi-config`) and `enable_uart=1` in `/boot/config.txt`.
+
+## Build
+
+From the project root:
+
+```bash
+cmake -S . -B build
+cmake --build build -j$(nproc)
+```
+
+Artifacts are placed under `bin/`:
+
+- `bin/test` — the main program (starts Modbus server and reads serial)
+- `bin/modbus_example` — minimal example that demonstrates server+client on the Pi
+- `bin/modbus_integration_test` — gtest integration test
+
+## Run (manual)
+
+Start the program (use a non‑privileged port like 1502):
+
+```bash
+./bin/test
+```
+
+Read registers using a Modbus TCP client (for example `mbpoll`) — registers contain 32‑bit IEEE floats split into two 16‑bit registers (high-word first):
+
+```bash
+# read 2 registers starting at address 2 (one float)
+mbpoll -m tcp -a 1 -r 2 -c 2 127.0.0.1:1502
+```
+
+## Register mapping (holding registers, base = 0)
+
+Each `float` in `hpData` is placed as two registers (big-endian word order). Current layout (starting at register 0):
+
+- 0..1: time_stamp
+- 2..3: active_enery_import_total
+- 4..5: active_energy_export_total
+- 6..7: reactive_energy_import_total
+- 8..9: reactive_energy_export_total
+- 10..11: active_power_import
+- 12..13: active_power_export
+- 14..15: reactive_power_import
+- 16..17: reactive_power_export
+- 18..19: l1_active_power_import
+- 20..21: l1_active_power_export
+- 22..23: l2_active_power_import
+- 24..25: l2_active_power_export
+- 26..27: l3_active_power_import
+- 28..29: l3_active_power_export
+- 30..31: l1_reactive_power_import
+- 32..33: l1_reactive_power_export
+- 34..35: l2_reactive_power_import
+- 36..37: l2_reactive_power_export
+- 38..39: l3_reactive_power_import
+- 40..41: l3_reactive_power_export
+- 42..43: l1_voltage_rms
+- 44..45: l2_voltage_rms
+- 46..47: l3_voltage_rms
+- 48..49: l1_current_rms
+- 50..51: l2_current_rms
+- 52..53: l3_current_rms
+
+Adjust clients to interpret two consecutive 16‑bit registers as one 32‑bit IEEE float in the same word order.
+
+## Tests
+
+The project includes a gtest integration test `modbus_integration_test` that parses a sample message, starts the server on a test port, writes registers and reads them back with a libmodbus client.
+
+Run the test binary directly:
+
+```bash
+./bin/modbus_integration_test
+```
+
+If you prefer `ctest`, add `enable_testing()` to the top-level `CMakeLists.txt` (I can add this for you) then run:
+
+```bash
+ctest --output-on-failure
+```
+
+## Run as a service (systemd)
+
+Create a unit file `/etc/systemd/system/hanport.service` and adjust paths/user:
+
+```
+[Unit]
+Description=Hanport Modbus/Serial bridge
+After=network.target
+
+[Service]
+Type=simple
+User=pi
+Group=pi
+WorkingDirectory=/home/pi/ws/bgs-ws/Hanport-data-parser
+ExecStart=/home/pi/ws/bgs-ws/Hanport-data-parser/bin/test
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Enable and start with:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now hanport.service
+sudo journalctl -fu hanport.service
+```
+
+## Notes and next steps
+
+- Word/byte ordering: the code writes floats as (high‑word, low‑word). If your clients expect a different order (low‑high or byte swapped) we can add runtime configuration to choose the ordering.
+- If you prefer scaled integers (for better PLC compatibility) we can expose values multiplied by a scale factor instead of IEEE floats.
+- The libmodbus mapping currently reserves 1000 registers — if you need more or different spaces (coils, discrete inputs) we can add them.
+
+If you want I can add `enable_testing()` to CMake, include a systemd unit file in the repo under `extras/`, or make the register layout configurable.
 
 
 

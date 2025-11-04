@@ -3,12 +3,14 @@
 #include "hpData.hpp"
 #include "hpSerialRead.hpp"
 #include "filereader.hpp"
+#include "hpModbuss.hpp"
 #include <iostream>
 #include <cstdlib>
 #include <iomanip>
 #include <thread>
 #include <chrono>
 #include <cstdint>
+#include <cstring>
 #ifndef EX_DATA_PATH
 #define EX_DATA_PATH "ex_data"
 #endif
@@ -60,6 +62,15 @@ int main(/*int argc, char** argv*/)
   const char *SERIAL_PORT = "/dev/ttyAMA0";
   // construct serial_reader with default attributes.
   hpSerialRead serial_reader;
+  // start modbus server to expose hpData on registers
+  hpModbuss modbus_server(1502);
+  try {
+    modbus_server.start();
+    std::cout << "Modbus server started on port 1502\n";
+  } catch (const std::exception &e) {
+    std::cerr << "Failed to start modbus server: " << e.what() << "\n";
+    // continue without modbus, main functionality still runs
+  }
   try
   {
     serial_reader.openPort(SERIAL_PORT);
@@ -69,7 +80,7 @@ int main(/*int argc, char** argv*/)
     std::cerr << "\nError " << e.what() << "\n";
   }
 
-  while (failed_readings < 5)
+  while (true)
   {
     raw_hp_message = serial_reader.hpRead();
     for (uint8_t &i : raw_hp_message)
@@ -111,6 +122,63 @@ int main(/*int argc, char** argv*/)
         hpDataParser message_parser(message_array);
         message_parser.parse_message(data_obj);
         std::cout << "active energy export: " << data_obj.active_enery_import_total << " kw" << std::endl;
+    // map important hpData floats into modbus holding registers as 32-bit floats
+    // helper: convert float to two uint16_t (big-endian register order)
+    auto float_to_regs = [](float f){
+      uint32_t u = 0;
+      static_assert(sizeof(float) == 4, "float must be 32-bit");
+      std::memcpy(&u, &f, sizeof(u));
+      uint16_t high = static_cast<uint16_t>((u >> 16) & 0xFFFF);
+      uint16_t low  = static_cast<uint16_t>(u & 0xFFFF);
+      return std::vector<uint16_t>{high, low};
+    };
+
+    std::vector<uint16_t> regs;
+    // order: time_stamp, active_enery_import_total, active_energy_export_total,
+    // reactive_import, reactive_export, active_power_import, active_power_export
+    auto append_float = [&](float v){
+      auto r = float_to_regs(v);
+      regs.insert(regs.end(), r.begin(), r.end());
+    };
+
+    append_float(data_obj.time_stamp);
+    append_float(data_obj.active_enery_import_total);
+    append_float(data_obj.active_energy_export_total);
+    append_float(data_obj.reactive_energy_import_total);
+    append_float(data_obj.reactive_energy_export_total);
+    append_float(data_obj.active_power_import);
+    append_float(data_obj.active_power_export);
+    append_float(data_obj.reactive_power_import);
+    append_float(data_obj.reactive_power_export);
+    // per-phase active power
+    append_float(data_obj.l1_active_power_import);
+    append_float(data_obj.l1_active_power_export);
+    append_float(data_obj.l2_active_power_import);
+    append_float(data_obj.l2_active_power_export);
+    append_float(data_obj.l3_active_power_import);
+    append_float(data_obj.l3_active_power_export);
+    // per-phase reactive power
+    append_float(data_obj.l1_reactive_power_import);
+    append_float(data_obj.l1_reactive_power_export);
+    append_float(data_obj.l2_reactive_power_import);
+    append_float(data_obj.l2_reactive_power_export);
+    append_float(data_obj.l3_reactive_power_import);
+    append_float(data_obj.l3_reactive_power_export);
+    // voltages
+    append_float(data_obj.l1_voltage_rms);
+    append_float(data_obj.l2_voltage_rms);
+    append_float(data_obj.l3_voltage_rms);
+    // currents
+    append_float(data_obj.l1_current_rms);
+    append_float(data_obj.l2_current_rms);
+    append_float(data_obj.l3_current_rms);
+
+    // write into modbus server holding registers starting at address 0
+    try {
+      modbus_server.set_holding_registers(0, regs);
+    } catch (const std::exception &e) {
+      std::cerr << "Failed to update modbus registers: " << e.what() << "\n";
+    }
       }
       catch (const std::exception &e)
       {
@@ -119,6 +187,12 @@ int main(/*int argc, char** argv*/)
       }
       raw_hp_message.clear();
     }
+  }
+  // stop modbus server cleanly before exiting
+  try {
+    modbus_server.stop();
+  } catch (...) {
+    // ignore
   }
   return 0;
 }

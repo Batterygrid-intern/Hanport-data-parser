@@ -55,6 +55,19 @@ target_link_libraries(modbus_example
 )
 target_include_directories(modbus_example PUBLIC ${CMAKE_SOURCE_DIR}/include ${LIBMODBUS_INCLUDE_DIRS})
 
+# integration test: parse sample message, start server and read back registers with libmodbus
+add_executable(modbus_integration_test ../tests/modbus_integration_test.cpp)
+target_include_directories(modbus_integration_test PUBLIC ${CMAKE_SOURCE_DIR}/include ${LIBMODBUS_INCLUDE_DIRS})
+target_link_libraries(modbus_integration_test
+    PRIVATE
+    gtest_main
+    hpModbuss
+    hpMessageValidator
+    hpDataParser
+    ${LIBMODBUS_LIBRARIES}
+)
+add_test(NAME modbus_integration_test COMMAND modbus_integration_test)
+
 
 #add_executable(readtest readtest.cpp)
 #target_link_libraries(readtest
