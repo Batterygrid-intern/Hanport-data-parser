@@ -35,9 +35,12 @@ float hpDataParser::parse_time(std::string& line){
     float time_value = 0; 
     char obis_del('(');
     char time_del(')');
-    int start_pos = line.find(obis_del) +1;
-    int last_pos = line.find(time_del) - 1;
-    int read_x_chars = last_pos - start_pos;
+    int start_pos = static_cast<int>(line.find(obis_del));
+    if (start_pos == (int)std::string::npos) throw std::runtime_error("failed to locate time '(' in line");
+    start_pos += 1;
+    int last_pos = static_cast<int>(line.find(time_del));
+    if (last_pos == (int)std::string::npos) throw std::runtime_error("failed to locate time ')' in line");
+    int read_x_chars = last_pos - start_pos; // number of characters between '(' and ')'
     try{
         time_value = std::stof(line.substr(start_pos, read_x_chars));
     }
@@ -50,9 +53,12 @@ float hpDataParser::set_value(std::string& line){
     float value = 0;
     char obis_del =  '(';
     char value_del = '*';
-    int start_pos = line.find(obis_del) + 1;
-    int end_pos = line.find(value_del) - 1;
-    int read_x_chars = end_pos - start_pos;
+    int start_pos = static_cast<int>(line.find(obis_del));
+    if (start_pos == (int)std::string::npos) throw std::runtime_error("failed to locate '(' in value line");
+    start_pos += 1;
+    int end_pos = static_cast<int>(line.find(value_del));
+    if (end_pos == (int)std::string::npos) throw std::runtime_error("failed to locate '*' in value line");
+    int read_x_chars = end_pos - start_pos; // characters between '(' and '*'
     try{
         value = std::stof(line.substr(start_pos, read_x_chars));
     }
