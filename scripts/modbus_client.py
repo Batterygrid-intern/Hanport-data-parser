@@ -13,12 +13,51 @@ the client will print pairs as 32-bit IEEE floats (high-word then low-word).
 import argparse
 from pymodbus.client import ModbusTcpClient
 import struct
+import socket
 
 
 def regs_to_float(high, low):
     u = (high << 16) | low
     return struct.unpack('!f', struct.pack('!I', u))[0]
 
+
+def raw_modbus_read(host, port, start, count, unit=1, timeout=3.0):
+    """Read holding registers via raw Modbus TCP (no pymodbus). Returns list of uint16 registers."""
+    trans_id = 1
+    proto_id = 0
+    length = 6
+    mbap = struct.pack('>HHH', trans_id, proto_id, length)
+    unit_id = struct.pack('B', unit)
+    pdu = struct.pack('>BHH', 3, start, count)
+    adu = mbap + unit_id + pdu
+    with socket.create_connection((host, port), timeout=timeout) as s:
+        s.sendall(adu)
+        header = s.recv(7)
+        if len(header) < 7:
+            raise RuntimeError('Incomplete MBAP header')
+        _, _, length = struct.unpack('>HHH', header[0:6])
+        # unit = header[6]
+        to_read = length - 1
+        body = b''
+        while len(body) < to_read:
+            chunk = s.recv(to_read - len(body))
+            if not chunk:
+                break
+            body += chunk
+        if len(body) < to_read:
+            raise RuntimeError('Incomplete PDU body')
+        func = body[0]
+        if func & 0x80:
+            exc = body[1]
+            raise RuntimeError(f'Modbus exception code {exc}')
+        bytecount = body[1]
+        data = body[2:2+bytecount]
+        if len(data) != bytecount:
+            raise RuntimeError('Mismatch bytecount')
+        regs = []
+        for i in range(0, len(data), 2):
+            regs.append(struct.unpack('>H', data[i:i+2])[0])
+        return regs
 
 def main():
     p = argparse.ArgumentParser()
@@ -28,27 +67,61 @@ def main():
     p.add_argument('--count', type=int, default=2)
     args = p.parse_args()
 
-    client = ModbusTcpClient(args.host, port=args.port)
-    if not client.connect():
-        print('Failed to connect to {}:{}'.format(args.host, args.port))
-        return 2
+    # Try using pymodbus first; if it fails or API mismatch, fall back to raw-socket
+    try:
+        client = ModbusTcpClient(args.host, port=args.port)
+        if client.connect():
+            try:
+                # try common signatures
+                rr = None
+                try:
+                    rr = client.read_holding_registers(args.start, args.count, unit=1)
+                except TypeError:
+                    try:
+                        rr = client.read_holding_registers(args.start, args.count, slave=1)
+                    except TypeError:
+                        rr = client.read_holding_registers(args.start, args.count, 1)
+                # interpret response
+                if rr is None:
+                    raise RuntimeError('pymodbus returned no result')
+                if hasattr(rr, 'isError') and rr.isError():
+                    raise RuntimeError(f'pymodbus error: {rr}')
+                if hasattr(rr, 'registers'):
+                    regs = rr.registers
+                else:
+                    regs = list(rr)
+                print('Read {} registers starting at {}'.format(len(regs), args.start))
+                for i, v in enumerate(regs):
+                    print('R[{}] = {}'.format(args.start + i, v))
+                if len(regs) >= 2:
+                    for i in range(0, len(regs) - 1, 2):
+                        f = regs_to_float(regs[i], regs[i+1])
+                        print('Float @ {}..{} = {}'.format(args.start + i, args.start + i + 1, f))
+                client.close()
+                raise SystemExit(0)
+            finally:
+                try:
+                    client.close()
+                except Exception:
+                    pass
+        else:
+            print(f'Failed to connect to {args.host}:{args.port} using pymodbus')
+    except Exception as e:
+        print('pymodbus path failed, falling back to raw socket:', e)
 
-    rr = client.read_holding_registers(args.start, args.count, unit=1)
-    if rr.isError():
-        print('Modbus read error:', rr)
-        return 3
-    regs = rr.registers
+    # raw socket fallback
+    try:
+        regs = raw_modbus_read(args.host, args.port, args.start, args.count)
+    except Exception as e:
+        print('Raw socket modbus read failed:', e)
+        raise SystemExit(4)
     print('Read {} registers starting at {}'.format(len(regs), args.start))
     for i, v in enumerate(regs):
         print('R[{}] = {}'.format(args.start + i, v))
-
-    # if even count, print floats from pairs
     if len(regs) >= 2:
         for i in range(0, len(regs) - 1, 2):
             f = regs_to_float(regs[i], regs[i+1])
             print('Float @ {}..{} = {}'.format(args.start + i, args.start + i + 1, f))
-
-    client.close()
 
 
 if __name__ == '__main__':
