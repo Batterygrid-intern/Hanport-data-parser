@@ -65,7 +65,14 @@ def main():
     p.add_argument('--port', type=int, default=1502)
     p.add_argument('--start', type=int, default=0)
     p.add_argument('--count', type=int, default=2)
+    p.add_argument('--all', action='store_true', help='read the full mapped range (0..53)')
+    p.add_argument('--pretty', action='store_true', help='pretty-print labelled fields')
     args = p.parse_args()
+
+    # if --all requested, override start/count to read the full mapped set
+    if args.all:
+        args.start = 0
+        args.count = 54
 
     # Try using pymodbus first; if it fails or API mismatch, fall back to raw-socket
     try:
@@ -91,12 +98,49 @@ def main():
                 else:
                     regs = list(rr)
                 print('Read {} registers starting at {}'.format(len(regs), args.start))
-                for i, v in enumerate(regs):
-                    print('R[{}] = {}'.format(args.start + i, v))
-                if len(regs) >= 2:
-                    for i in range(0, len(regs) - 1, 2):
-                        f = regs_to_float(regs[i], regs[i+1])
-                        print('Float @ {}..{} = {}'.format(args.start + i, args.start + i + 1, f))
+                if args.pretty and args.start == 0 and len(regs) >= 54:
+                    # pretty-print the full mapped register set
+                    labels = [
+                        ('time_stamp','ticks'),
+                        ('active_energy_import_total','kWh'),
+                        ('active_energy_export_total','kWh'),
+                        ('reactive_energy_import_total','kvarh'),
+                        ('reactive_energy_export_total','kvarh'),
+                        ('active_power_import','kW'),
+                        ('active_power_export','kW'),
+                        ('reactive_power_import','kvar'),
+                        ('reactive_power_export','kvar'),
+                        ('l1_active_power_import','kW'),
+                        ('l1_active_power_export','kW'),
+                        ('l2_active_power_import','kW'),
+                        ('l2_active_power_export','kW'),
+                        ('l3_active_power_import','kW'),
+                        ('l3_active_power_export','kW'),
+                        ('l1_reactive_power_import','kvar'),
+                        ('l1_reactive_power_export','kvar'),
+                        ('l2_reactive_power_import','kvar'),
+                        ('l2_reactive_power_export','kvar'),
+                        ('l3_reactive_power_import','kvar'),
+                        ('l3_reactive_power_export','kvar'),
+                        ('l1_voltage_rms','V'),
+                        ('l2_voltage_rms','V'),
+                        ('l3_voltage_rms','V'),
+                        ('l1_current_rms','A'),
+                        ('l2_current_rms','A'),
+                        ('l3_current_rms','A')
+                    ]
+                    for idx, (name, unit) in enumerate(labels):
+                        hi = regs[2*idx]
+                        lo = regs[2*idx + 1]
+                        f = regs_to_float(hi, lo)
+                        print(f"{name:30s} @ {2*idx:2d}..{2*idx+1:2d} = {f} {unit}  (0x{hi:04X} 0x{lo:04X})")
+                else:
+                    for i, v in enumerate(regs):
+                        print('R[{}] = {}'.format(args.start + i, v))
+                    if len(regs) >= 2:
+                        for i in range(0, len(regs) - 1, 2):
+                            f = regs_to_float(regs[i], regs[i+1])
+                            print('Float @ {}..{} = {}'.format(args.start + i, args.start + i + 1, f))
                 client.close()
                 raise SystemExit(0)
             finally:
@@ -116,12 +160,48 @@ def main():
         print('Raw socket modbus read failed:', e)
         raise SystemExit(4)
     print('Read {} registers starting at {}'.format(len(regs), args.start))
-    for i, v in enumerate(regs):
-        print('R[{}] = {}'.format(args.start + i, v))
-    if len(regs) >= 2:
-        for i in range(0, len(regs) - 1, 2):
-            f = regs_to_float(regs[i], regs[i+1])
-            print('Float @ {}..{} = {}'.format(args.start + i, args.start + i + 1, f))
+    if args.pretty and args.start == 0 and len(regs) >= 54:
+        labels = [
+            ('time_stamp','ticks'),
+            ('active_energy_import_total','kWh'),
+            ('active_energy_export_total','kWh'),
+            ('reactive_energy_import_total','kvarh'),
+            ('reactive_energy_export_total','kvarh'),
+            ('active_power_import','kW'),
+            ('active_power_export','kW'),
+            ('reactive_power_import','kvar'),
+            ('reactive_power_export','kvar'),
+            ('l1_active_power_import','kW'),
+            ('l1_active_power_export','kW'),
+            ('l2_active_power_import','kW'),
+            ('l2_active_power_export','kW'),
+            ('l3_active_power_import','kW'),
+            ('l3_active_power_export','kW'),
+            ('l1_reactive_power_import','kvar'),
+            ('l1_reactive_power_export','kvar'),
+            ('l2_reactive_power_import','kvar'),
+            ('l2_reactive_power_export','kvar'),
+            ('l3_reactive_power_import','kvar'),
+            ('l3_reactive_power_export','kvar'),
+            ('l1_voltage_rms','V'),
+            ('l2_voltage_rms','V'),
+            ('l3_voltage_rms','V'),
+            ('l1_current_rms','A'),
+            ('l2_current_rms','A'),
+            ('l3_current_rms','A')
+        ]
+        for idx, (name, unit) in enumerate(labels):
+            hi = regs[2*idx]
+            lo = regs[2*idx + 1]
+            f = regs_to_float(hi, lo)
+            print(f"{name:30s} @ {2*idx:2d}..{2*idx+1:2d} = {f} {unit}  (0x{hi:04X} 0x{lo:04X})")
+    else:
+        for i, v in enumerate(regs):
+            print('R[{}] = {}'.format(args.start + i, v))
+        if len(regs) >= 2:
+            for i in range(0, len(regs) - 1, 2):
+                f = regs_to_float(regs[i], regs[i+1])
+                print('Float @ {}..{} = {}'.format(args.start + i, args.start + i + 1, f))
 
 
 if __name__ == '__main__':
