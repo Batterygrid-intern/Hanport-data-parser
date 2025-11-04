@@ -68,6 +68,11 @@ target_link_libraries(modbus_integration_test
 )
 add_test(NAME modbus_integration_test COMMAND modbus_integration_test)
 
+# optional C++ client to read remote Modbus registers
+add_executable(modbus_client modbus_client.cpp)
+target_include_directories(modbus_client PUBLIC ${CMAKE_SOURCE_DIR}/include ${LIBMODBUS_INCLUDE_DIRS})
+target_link_libraries(modbus_client PRIVATE ${LIBMODBUS_LIBRARIES})
+
 
 #add_executable(readtest readtest.cpp)
 #target_link_libraries(readtest
