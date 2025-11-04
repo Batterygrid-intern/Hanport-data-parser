@@ -11,6 +11,8 @@
 #include <vector>
 #include <map>
 #include <string>
+// include hpData so callers of hpModbuss see the concrete type in the header
+#include "hpData.hpp"
 
 class hpModbuss {
 public:
@@ -39,6 +41,16 @@ public:
 
     // Return human-readable status
     std::string status() const;
+
+    // Helper: convert a 32-bit float to two 16-bit registers (big-endian word order)
+    static std::vector<uint16_t> float_to_regs(float f);
+
+    // Build the full register vector from an hpData snapshot
+    std::vector<uint16_t> make_regs(const hpData &d) const;
+
+    // Convenience: set holding registers from an hpData snapshot starting at address
+    // This will call set_holding_registers internally and is thread-safe.
+    void set_from_hpData(const hpData &d, uint16_t start_address = 0);
 
 private:
     // Pimpl-like private data to keep implementation details out of header

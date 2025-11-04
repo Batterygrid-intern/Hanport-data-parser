@@ -85,59 +85,7 @@ int main(int argc, char** argv)
   hpSerialRead serial_reader;
   // heartbeat counter (ticks every loop cycle) - will be stored in time_stamp
   float heartbeat = 0.0f;
-  // helper: convert float to two uint16_t (big-endian register order)
-  auto float_to_regs = [](float f)
-  {
-    uint32_t u = 0;
-    static_assert(sizeof(float) == 4, "float must be 32-bit");
-    std::memcpy(&u, &f, sizeof(u));
-    uint16_t high = static_cast<uint16_t>((u >> 16) & 0xFFFF);
-    uint16_t low = static_cast<uint16_t>(u & 0xFFFF);
-    return std::vector<uint16_t>{high, low};
-  };
-  // helper: build full register vector from hpData (re-usable before/inside loop)
-  auto make_regs = [&](const hpData &d) -> std::vector<uint16_t>
-  {
-    std::vector<uint16_t> r;
-    auto append_float = [&](float v)
-    {
-      auto parts = float_to_regs(v);
-      r.insert(r.end(), parts.begin(), parts.end());
-    };
-
-    append_float(d.time_stamp);
-    append_float(d.active_enery_import_total);
-    append_float(d.active_energy_export_total);
-    append_float(d.reactive_energy_import_total);
-    append_float(d.reactive_energy_export_total);
-    append_float(d.active_power_import);
-    append_float(d.active_power_export);
-    append_float(d.reactive_power_import);
-    append_float(d.reactive_power_export);
-    // per-phase active power
-    append_float(d.l1_active_power_import);
-    append_float(d.l1_active_power_export);
-    append_float(d.l2_active_power_import);
-    append_float(d.l2_active_power_export);
-    append_float(d.l3_active_power_import);
-    append_float(d.l3_active_power_export);
-    // per-phase reactive power
-    append_float(d.l1_reactive_power_import);
-    append_float(d.l1_reactive_power_export);
-    append_float(d.l2_reactive_power_import);
-    append_float(d.l2_reactive_power_export);
-    append_float(d.l3_reactive_power_import);
-    append_float(d.l3_reactive_power_export);
-    // voltages
-    append_float(d.l1_voltage_rms);
-    append_float(d.l2_voltage_rms);
-    append_float(d.l3_voltage_rms);
-    // currents
-    append_float(d.l1_current_rms);
-    append_float(d.l2_current_rms);
-    append_float(d.l3_current_rms);
-    return r;
-  };
+  // register conversion and packing are provided by hpModbuss (see set_from_hpData)
   // start modbus server to expose hpData on registers
   hpModbuss modbus_server(static_cast<uint16_t>(port));
   try {
@@ -158,8 +106,7 @@ int main(int argc, char** argv)
 
   // initialize registers once so clients can read initial values immediately
   try {
-    auto init_regs = make_regs(data_obj);
-    modbus_server.set_holding_registers(0, init_regs);
+    modbus_server.set_from_hpData(data_obj, 0);
   } catch (const std::exception &e) {
     std::cerr << "Initial modbus register write failed: " << e.what() << "\n";
   }
@@ -220,13 +167,9 @@ int main(int argc, char** argv)
     }
 
     // write registers every loop so heartbeat and last-known values are always exposed
-    try
-    {
-      auto regs = make_regs(data_obj);
-      modbus_server.set_holding_registers(0, regs);
-    }
-    catch (const std::exception &e)
-    {
+    try {
+      modbus_server.set_from_hpData(data_obj, 0);
+    } catch (const std::exception &e) {
       std::cerr << "Failed to update modbus registers: " << e.what() << "\n";
     }
   }

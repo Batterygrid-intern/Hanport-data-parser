@@ -2,6 +2,8 @@
 
 #include "hpModbuss.hpp"
 
+#include "hpData.hpp"
+
 #include <thread>
 #include <mutex>
 #include <atomic>
@@ -175,6 +177,63 @@ void hpModbuss::set_holding_registers(uint16_t address, const std::vector<uint16
         if (pimpl_->mb_mapping && (address + i) < 1000) pimpl_->mb_mapping->tab_registers[address + i] = values[i];
         #endif
     }
+}
+
+// static helper: float -> two registers (big-endian word order)
+std::vector<uint16_t> hpModbuss::float_to_regs(float f){
+    uint32_t u = 0;
+    static_assert(sizeof(float) == 4, "float must be 32-bit");
+    std::memcpy(&u, &f, sizeof(u));
+    uint16_t high = static_cast<uint16_t>((u >> 16) & 0xFFFF);
+    uint16_t low = static_cast<uint16_t>(u & 0xFFFF);
+    return std::vector<uint16_t>{high, low};
+}
+
+// Build register vector from hpData
+std::vector<uint16_t> hpModbuss::make_regs(const hpData &d) const {
+    std::vector<uint16_t> r;
+    auto append_float = [&](float v){
+        auto parts = float_to_regs(v);
+        r.insert(r.end(), parts.begin(), parts.end());
+    };
+    append_float(d.time_stamp);
+    append_float(d.active_enery_import_total);
+    append_float(d.active_energy_export_total);
+    append_float(d.reactive_energy_import_total);
+    append_float(d.reactive_energy_export_total);
+    append_float(d.active_power_import);
+    append_float(d.active_power_export);
+    append_float(d.reactive_power_import);
+    append_float(d.reactive_power_export);
+    // per-phase active power
+    append_float(d.l1_active_power_import);
+    append_float(d.l1_active_power_export);
+    append_float(d.l2_active_power_import);
+    append_float(d.l2_active_power_export);
+    append_float(d.l3_active_power_import);
+    append_float(d.l3_active_power_export);
+    // per-phase reactive power
+    append_float(d.l1_reactive_power_import);
+    append_float(d.l1_reactive_power_export);
+    append_float(d.l2_reactive_power_import);
+    append_float(d.l2_reactive_power_export);
+    append_float(d.l3_reactive_power_import);
+    append_float(d.l3_reactive_power_export);
+    // voltages
+    append_float(d.l1_voltage_rms);
+    append_float(d.l2_voltage_rms);
+    append_float(d.l3_voltage_rms);
+    // currents
+    append_float(d.l1_current_rms);
+    append_float(d.l2_current_rms);
+    append_float(d.l3_current_rms);
+    return r;
+}
+
+// Convenience: set registers directly from hpData
+void hpModbuss::set_from_hpData(const hpData &d, uint16_t start_address){
+    auto regs = make_regs(d);
+    set_holding_registers(start_address, regs);
 }
 
 uint16_t hpModbuss::get_holding_register(uint16_t address) const{
