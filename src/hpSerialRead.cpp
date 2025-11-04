@@ -94,7 +94,7 @@ std::vector<uint8_t> hpSerialRead::hpRead()
             //identify end of message marker and tell to start reading crc part
             if(byte == '!' && reading_message && !end_found)
             {   message.push_back(byte);
-                end_found = true;progra
+                end_found = true;
                 crc_bytes_read = 0;
                 continue;
             }
