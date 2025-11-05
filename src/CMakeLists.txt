@@ -29,6 +29,16 @@ target_link_libraries(hpModbuss
     PUBLIC 
      ${LIBMODBUS_LIBRARIES}
 )
+add_library(hpMqttPub STATIC hpMqttPub.cpp)
+target_include_directories(hpMqttPub
+    PUBLIC
+        ${CMAKE_SOURCE_DIR}/include
+        ${PAHO_MQTT_CPP_INCLUDE_DIRS}
+)
+target_link_libraries(hpMqttPub
+        PUBLIC
+            {PAHO_MQTT_CPP_LIBRARIES}
+)
 # Let the source know libmodbus was found (so code can #ifdef LIBMODBUS_FOUND)
 target_compile_definitions(hpModbuss PUBLIC LIBMODBUS_FOUND)
 # build executable and link to libraries
@@ -41,12 +51,16 @@ target_link_libraries(${PROJECT_NAME}
     hpSerialRead
     hpModbuss
 )
+
+#Test and example files can be removed in production
 add_executable(writetest writetest.cpp)
 target_link_libraries(writetest
     CppLinuxSerial 
     filereader
    
 )
+
+
 
 add_executable(modbus_example modbus_example.cpp)
 target_link_libraries(modbus_example
