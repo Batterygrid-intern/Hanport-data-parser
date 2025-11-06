@@ -29,12 +29,12 @@ target_link_libraries(hpModbuss
     PUBLIC 
      ${LIBMODBUS_LIBRARIES}
 )
-add_library(hpMqttPub STATIC hpMqttPub.cpp)
-target_include_directories(hpMqttPub
+add_library(HpMqttPub STATIC hpMqttPub.cpp)
+target_include_directories(HpMqttPub
     PUBLIC
         ${CMAKE_SOURCE_DIR}/include
 )
-target_link_libraries(hpMqttPub
+target_link_libraries(HpMqttPub
         PUBLIC
         PahoMqttCpp::paho-mqttpp3
 
@@ -51,6 +51,7 @@ target_link_libraries(${PROJECT_NAME}
     hpData
     hpSerialRead
     hpModbuss
+    HpMqttPub
 )
 
 #Test and example files can be removed in production
