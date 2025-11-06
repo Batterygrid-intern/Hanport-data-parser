@@ -3,6 +3,7 @@
 #include <string>
 #include <memory>
 #include <mqtt/async_client.h>
+#include "Config.hpp"
 #include <hpData.hpp>
 
 
@@ -37,6 +38,9 @@ class HpMqttPub{
         std::string buildTopic(const std::string& measurment) const;
         std::string getBaseTopic() const;
         ~HpMqttPub();
+            // Construct HpMqttPub from an INI-style config file and site name.
+            // On error, returns nullptr and sets err.
+            static std::unique_ptr<HpMqttPub> fromConfigFile(const std::string &path, const std::string &site, std::string &err);
     private:
         //smart pointer to mqtt_client and attributes to mqtt client
         std::unique_ptr<mqtt::async_client> client_;

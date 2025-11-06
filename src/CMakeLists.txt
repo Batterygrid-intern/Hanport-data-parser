@@ -29,7 +29,7 @@ target_link_libraries(hpModbuss
     PUBLIC 
      ${LIBMODBUS_LIBRARIES}
 )
-add_library(HpMqttPub STATIC hpMqttPub.cpp)
+add_library(HpMqttPub STATIC hpMqttPub.cpp Config.cpp)
 target_include_directories(HpMqttPub
     PUBLIC
         ${CMAKE_SOURCE_DIR}/include
