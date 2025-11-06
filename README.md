@@ -267,5 +267,5 @@ Security notes
 
 
 //TODO
-add dependencise and libraries that the program is built upon
+add dependencise and libraries that the program is built upon and how to install them
 

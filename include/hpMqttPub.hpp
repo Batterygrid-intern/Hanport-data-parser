@@ -8,13 +8,13 @@
 
 class HpMqttPub{
     public:
-        HpMqttPub(const std::string& brokerAddress, const std::string& clientId);
+        HpMqttPub(const std::string& brokerAddress, const std::string& clientId,const std::string& site, const std::string& deviceId);
         //connect to broker
         bool connect();
         //Disconnect from the broker
         void disconnect();
         //Check if connected
-        bool isConnected();
+        bool isConnected() const;
         //set the site name as root topic
         bool setSite(const std::string& site);
         //set the device id as subtopic
@@ -23,7 +23,7 @@ class HpMqttPub{
         //Each field gets its own topic: {site}/{deviceId}/{field_name}
         bool publishAllData(const hpData& data);
         //publish all hpData fields with custom site and device id
-        bool publishAllData(const hpData& data, std::string& site, std::string& deviceId);
+        bool publishAllData(const hpData& data, const std::string& site, const std::string& deviceId);
         //publish a single measurement to a topic
         bool publishMeasurement(const std::string& measurementName, float value);
         //publish a raw message to any topic
@@ -34,6 +34,7 @@ class HpMqttPub{
         void setLastWill(const std::string& topic,const std::string& message);
 
         //Get the current base topic path
+        std::string buildTopic(const std::string& measurment) const;
         std::string getBaseTopic() const;
         ~HpMqttPub();
     private:
@@ -52,7 +53,6 @@ class HpMqttPub{
         //build base topic path: {site}/{deviceId}
         std::string buildBaseTopic() const;
         //build full topic path: {site}/{deviceId}/{measurement}
-        std::string buildTopic(const std::string& measurment) const;
         // Helper to publish a single float value
         bool publishFloat(const std::string& topic, float value);
         // Publish all individual fields from hpData

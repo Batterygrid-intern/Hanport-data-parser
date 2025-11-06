@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.16)
 project(test LANGUAGES C CXX)
 find_package(PkgConfig REQUIRED)
 find_package(PahoMqttCpp REQUIRED)
-pkg_check_modules(PAHO_MQTT_CPP REQUIRED paho-mqttpp3)
 pkg_check_modules(LIBMODBUS REQUIRED libmodbus)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)

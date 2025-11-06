@@ -33,12 +33,13 @@ add_library(hpMqttPub STATIC hpMqttPub.cpp)
 target_include_directories(hpMqttPub
     PUBLIC
         ${CMAKE_SOURCE_DIR}/include
-        ${PAHO_MQTT_CPP_INCLUDE_DIRS}
 )
 target_link_libraries(hpMqttPub
         PUBLIC
-            {PAHO_MQTT_CPP_LIBRARIES}
+        PahoMqttCpp::paho-mqttpp3
+
 )
+
 # Let the source know libmodbus was found (so code can #ifdef LIBMODBUS_FOUND)
 target_compile_definitions(hpModbuss PUBLIC LIBMODBUS_FOUND)
 # build executable and link to libraries

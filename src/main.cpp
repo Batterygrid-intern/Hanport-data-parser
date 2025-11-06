@@ -1,3 +1,4 @@
+#include "hpMqttPub.hpp"
 #include "hpMessageValidator.hpp"
 #include "hpDataParser.hpp"
 #include "hpData.hpp"
@@ -75,18 +76,42 @@ int main(int argc, char** argv)
     }
   }
 
-  // variable to calculate how many failed validations that has occured
-  int failed_readings = 0;
+  //initialize data object to store parsed data
   hpData data_obj;
   std::vector<uint8_t> raw_hp_message;
   // open serial port
   const char *SERIAL_PORT = "/dev/ttyAMA0";
   // construct serial_reader with default attributes.
   hpSerialRead serial_reader;
+
   // heartbeat counter (ticks every loop cycle) - will be stored in time_stamp
   float heartbeat = 0.0f;
   // register conversion and packing are provided by hpModbuss (see set_from_hpData)
   // start modbus server to expose hpData on registers
+
+  //initialize mqtt client // add defines later for attributes for each site
+  //TODO build class / file to hold defines and constants for each deployment site
+  const std::string brokerAddress = "localhost:1883";
+  const std::string clientId = "1";
+  const std::string willTopic = "hanport_client/status";
+  const std::string willMessage = "offline";
+  const std::string site = "bgs-office";
+  const std::string deviceId = "hanport_meter_01";
+  const std::string userName = "mqtt_user";
+  const std::string password = "mqtt_password";
+  const std::string measurement_topic = "hanport_data";
+  HpMqttPub mqtt_publisher(brokerAddress, clientId, site, deviceId);
+  mqtt_publisher.buildTopic(measurement_topic);
+  mqtt_publisher.setCrendetials(userName, password);
+  mqtt_publisher.setLastWill(willTopic, willMessage);
+  if (mqtt_publisher.connect()) {
+    std::cout << "Connected to MQTT broker at " << brokerAddress << "\n";
+  } else {
+    std::cerr << "Failed to connect to MQTT broker at " << brokerAddress << "\n";
+  }
+
+
+  // initialize modbus server
   hpModbuss modbus_server(static_cast<uint16_t>(port));
   try {
     modbus_server.start();
@@ -147,7 +172,6 @@ int main(int argc, char** argv)
       catch (const std::exception &e)
       {
         std::cerr << "\nError " << e.what() << "\n";
-        failed_readings++;
         continue;
       }
       // initalise message_parser
@@ -156,16 +180,19 @@ int main(int argc, char** argv)
       {
         hpDataParser message_parser(message_array);
         message_parser.parse_message(data_obj);
-        std::cout << "active energy export: " << data_obj.active_enery_import_total << " kw" << std::endl;
       }
       catch (const std::exception &e)
       {
         std::cerr << "\nError " << e.what() << "\n";
-        failed_readings++;
       }
       raw_hp_message.clear();
     }
-
+    try {
+      mqtt_publisher.publishAllData(data_obj, site, deviceId);
+    }
+    catch (const std::exception &e) {
+      std::cerr << "Failed to publish MQTT data: " << e.what() << "\n";
+    }
     // write registers every loop so heartbeat and last-known values are always exposed
     try {
       modbus_server.set_from_hpData(data_obj, 0);
@@ -176,6 +203,7 @@ int main(int argc, char** argv)
   // stop modbus server cleanly before exiting
   try {
     modbus_server.stop();
+    mqtt_publisher.disconnect();
   } catch (...) {
     // ignore
   }
