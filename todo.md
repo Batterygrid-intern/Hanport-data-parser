@@ -1,10 +1,9 @@
 # Todo config
-1. Välj vad för typ av configfil jag ska läsa ifrån(hur den ska vara strukturerad)
-2. strukturera en config class som kan läsa och sätta configs för alla konfigurations variabler i main
-
 # Todo main.cpp
 1. rensa upp main, säkerställ att jag loggar allt och har dynamsik configurering utifrån filen som laddas in i projektet
 2. hur startar jag programmet? vart läser den inputs ifrån från fil också?
+3. starta med argument till path för app.ini fil 
+
 # Todo logger
 1. bygg en logg modul som skriver allt till en logg fil så vi kan se vad som händer
 
@@ -21,3 +20,4 @@
 # Todo Documentation
 1. Lägg till en tydlig tfhw för projektet
 2. Lägg till dokumentation i koden
+
