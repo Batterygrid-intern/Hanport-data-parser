@@ -1,8 +1,8 @@
 #include "hpSerialRead.hpp"
+#include "Logger.hpp"
 #include <iostream>
 #include <cstdint>
 #include <fstream>
-
 
 hpSerialRead::~hpSerialRead(){
     closePort();
@@ -13,13 +13,18 @@ void hpSerialRead::openPort(const char* serial_port_path){
     tcflush(this->serial_fd, TCIOFLUSH);
 
     if(this->serial_fd < 0){
-        throw std::runtime_error("failed to open file descriptor");
+        std::string error = "Failed to open serial port: " + std::string(serial_port_path);
+        Logger::logError("SerialRead", error);
+        throw std::runtime_error(error);
     }
+    Logger::logLatestMessage("Successfully opened serial port: " + std::string(serial_port_path));
     setupPort();
 }
 void hpSerialRead::setupPort(){
     if(tcgetattr(this->serial_fd,&this->tty) != 0){
-        throw std::runtime_error("failed to get attributes for serial port");
+        std::string error = "Failed to get attributes for serial port";
+        Logger::logError("SerialRead", error);
+        throw std::runtime_error(error);
     }
     hpSetupCflag(&this->tty);
     hpSetupLflag(&this->tty);
@@ -29,8 +34,11 @@ void hpSerialRead::setupPort(){
     cfsetispeed(&this->tty,BAUD_RATE);
 
     if(tcsetattr(this->serial_fd,TCSANOW,&this->tty) != 0){
-        throw std::runtime_error("Failed to set attribute to serial port");
+        std::string error = "Failed to set attributes for serial port";
+        Logger::logError("SerialRead", error);
+        throw std::runtime_error(error);
     }
+    Logger::logLatestMessage("Successfully configured serial port");
 }
 void hpSerialRead::closePort(){
     close(serial_fd);

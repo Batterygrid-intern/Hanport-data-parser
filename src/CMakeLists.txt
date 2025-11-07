@@ -3,11 +3,13 @@ add_library(hpMessageValidator STATIC hpMessageValidator.cpp)
 target_include_directories(hpMessageValidator 
     PUBLIC ${CMAKE_SOURCE_DIR}/include
 )
+
 # build hpDataParser
 add_library(hpDataParser STATIC hpDataParser.cpp)
 target_include_directories(hpDataParser
     PUBLIC ${CMAKE_SOURCE_DIR}/include
 )
+
 #build serial read lib
 add_library(hpSerialRead STATIC hpSerialRead.cpp)
 target_include_directories(hpSerialRead
@@ -18,24 +20,6 @@ add_library(filereader STATIC filereader.cpp)
 target_include_directories(filereader
     PUBLIC ${CMAKE_SOURCE_DIR}/include
 )
-
-add_library(hpModbuss STATIC hpModbuss.cpp)
-target_include_directories(hpModbuss
-    PUBLIC
-        ${CMAKE_SOURCE_DIR}/include
-        ${LIBMODBUS_INCLUDE_DIRS}
-)
-target_link_libraries(hpModbuss
-    PUBLIC 
-     ${LIBMODBUS_LIBRARIES}
-)
-add_library(HpMqttPub STATIC hpMqttPub.cpp Config.cpp)
-target_include_directories(HpMqttPub
-    PUBLIC
-        ${CMAKE_SOURCE_DIR}/include
-)
-target_link_libraries(HpMqttPub
-        PUBLIC
         PahoMqttCpp::paho-mqttpp3
 
 )

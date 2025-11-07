@@ -5,6 +5,8 @@
 #include "hpSerialRead.hpp"
 #include "filereader.hpp"
 #include "hpModbuss.hpp"
+#include "Logger.hpp"
+#include "Config.hpp"
 #include <iostream>
 #include <cstdlib>
 #include <iomanip>
@@ -19,14 +21,20 @@
 #define MAX_TRIES 5
 #endif
 
-//debugging GDB 
-//
+#ifndef LOG_FILE_PATH
+#define LOG_FILE_PATH "/var/log/hanport/hanport.log"
+#endif
 
-//use 2 threads one for reading data one for calculating data or just put everything in the same try block?
-//sleep validating tread until reading is completed?
-//build binary file that you can flash on any raspberry pi.
-//build libraries static or dynamic? static because im either way going to need all the methods i create.?
-//states error state ->(reset)-> running state?
+// Initialize the system and set up error handling
+void initializeSystem() {
+    try {
+        Logger::init(LOG_FILE_PATH);
+        Logger::logLatestMessage("System initialization started");
+    } catch (const std::exception& e) {
+        std::cerr << "Failed to initialize logging system: " << e.what() << std::endl;
+        throw;
+    }
+}
 
 
 //SETUP TTYAMA0 DEVICE TO INTERPRATE MESSAGE CORRECTLY ACCODRING TO THE HANPORT PROTOCOL (1 time thing at start-up)
@@ -80,7 +88,18 @@ int main(int argc, char** argv)
   hpData data_obj;
   std::vector<uint8_t> raw_hp_message;
   // open serial port
-  const char *SERIAL_PORT = "/dev/ttyAMA0";
+  // Determine config path: allow override with HANPORT_CONF env var
+  Config cfg;
+  std::string cfgPath = std::getenv("HANPORT_CONF") ? std::string(std::getenv("HANPORT_CONF")) : std::string("app.ini");
+  std::string cfgErr;
+  if (!cfg.loadFromFile(cfgPath, cfgErr)) {
+    // If config not found, log and continue with defaults
+    Logger::logError("Init", "Failed to load config '" + cfgPath + "': " + cfgErr);
+  }
+
+  // Serial path: can be set in config under [serial] path=...
+  std::string serialPath = cfg.get("serial", "path", "/dev/ttyAMA0");
+  const char *SERIAL_PORT = serialPath.c_str();
   // construct serial_reader with default attributes.
   hpSerialRead serial_reader;
 
@@ -89,44 +108,43 @@ int main(int argc, char** argv)
   // register conversion and packing are provided by hpModbuss (see set_from_hpData)
   // start modbus server to expose hpData on registers
 
-  //initialize mqtt client // add defines later for attributes for each site
-  //TODO build class / file to hold defines and constants for each deployment site
-  const std::string brokerAddress = "localhost:1883";
-  const std::string clientId = "1";
-  const std::string willTopic = "hanport_client/status";
-  const std::string willMessage = "offline";
-  const std::string site = "bgs-office";
-  const std::string deviceId = "hanport_meter_01";
-  const std::string userName = "mqtt_user";
-  const std::string password = "mqtt_password";
-  const std::string measurement_topic = "hanport_data";
+  // initialize mqtt client using values from config (falls back to sensible defaults)
+  // TODO: consider env overrides for production (e.g. HANPORT_MQTT_BROKER)
+  const std::string brokerAddress = cfg.get("mqtt", "broker", "localhost:1883");
+  const std::string clientId = cfg.get("mqtt", "client_id", "1");
+  const std::string willTopic = cfg.get("mqtt", "will_topic", "hanport_client/status");
+  const std::string willMessage = cfg.get("mqtt", "will_message", "offline");
+  const std::string site = cfg.get("mqtt", "site", "bgs-office");
+  const std::string deviceId = cfg.get("mqtt", "device_id", "hanport_meter_01");
+  const std::string userName = cfg.get("mqtt", "username", "mqtt_user");
+  const std::string password = cfg.get("mqtt", "password", "mqtt_password");
+  const std::string measurement_topic = cfg.get("mqtt", "measurement_topic", "hanport_data");
+
   HpMqttPub mqtt_publisher(brokerAddress, clientId, site, deviceId);
   mqtt_publisher.buildTopic(measurement_topic);
   mqtt_publisher.setCrendetials(userName, password);
   mqtt_publisher.setLastWill(willTopic, willMessage);
   if (mqtt_publisher.connect()) {
-    std::cout << "Connected to MQTT broker at " << brokerAddress << "\n";
+    Logger::logLatestMessage("Connected to MQTT broker at " + brokerAddress);
   } else {
-    std::cerr << "Failed to connect to MQTT broker at " << brokerAddress << "\n";
+    Logger::logError("MQTT", "Failed to connect to MQTT broker at " + brokerAddress);
   }
-
 
   // initialize modbus server
   hpModbuss modbus_server(static_cast<uint16_t>(port));
   try {
     modbus_server.start();
-    std::cout << "Modbus server started on port " << port << "\n";
+    Logger::logLatestMessage("Modbus server started on port " + std::to_string(port));
   } catch (const std::exception &e) {
-    std::cerr << "Failed to start modbus server: " << e.what() << "\n";
+    Logger::logError("Modbus", std::string("Failed to start modbus server: ") + e.what());
     // continue without modbus, main functionality still runs
   }
-  try
-  {
+  
+  try {
     serial_reader.openPort(SERIAL_PORT);
-  }
-  catch (std::exception &e)
-  {
-    std::cerr << "\nError " << e.what() << "\n";
+  } catch (std::exception &e) {
+    Logger::logError("SerialPort", std::string("Failed to open serial port: ") + e.what());
+    throw; // Re-throw as this is critical
   }
 
   // initialize registers once so clients can read initial values immediately
@@ -154,43 +172,43 @@ int main(int argc, char** argv)
     // try to validate the data if failed catch exceptions thrown inside HanportMessageValidator class.
     if (!raw_hp_message.empty()) // find '!'?{
     {
-      try
-      { // instantiate message_validator object with transmitted raw data from serial port exceptions will be thrown if construction fails
+      try { 
+        // instantiate message_validator object with transmitted raw data from serial port
         HanportMessageValidator message_validator(raw_hp_message);
-        // compare the crc calculated inside the constructor with the transmitted crc extracted from the message
-        if (message_validator.get_calculated_crc() != message_validator.get_transmitted_crc())
-        {
-          std::cout << "Calucalted CRC = " << std::hex << std::showbase << message_validator.get_calculated_crc() << "\nTransmitted CRC = " << message_validator.get_transmitted_crc() << std::dec << std::noshowbase << "\n";
-          throw std::runtime_error("Data invalid: calculated crc  not equal to transmitted crc");
+        
+        // compare the crc calculated inside the constructor with the transmitted crc
+        if (message_validator.get_calculated_crc() != message_validator.get_transmitted_crc()) {
+          std::string crcError = "CRC mismatch - Calculated: " + 
+                                std::to_string(message_validator.get_calculated_crc()) +
+                                " Transmitted: " + 
+                                std::to_string(message_validator.get_transmitted_crc());
+          Logger::logError("MessageValidator", crcError);
+          throw std::runtime_error("Data invalid: " + crcError);
         }
-        std::cout << "Calucalted CRC = " << std::hex << std::setiosflags(std::ios::showbase) << message_validator.get_calculated_crc() << "\nTransmitted CRC = " << message_validator.get_transmitted_crc() << std::dec << std::noshowbase << "\n";
-        std::cout << "Data is valid" << std::endl;
-        // from message_validator return a string array for the data to be parsed
+        
+        Logger::logLatestMessage("Message validated successfully - CRC check passed");
         message_array = message_validator.message_to_string_arr();
-      }
-      // catch exceptions thrown inside message_validator
-      catch (const std::exception &e)
-      {
-        std::cerr << "\nError " << e.what() << "\n";
+      } catch (const std::exception &e) {
+        Logger::logError("MessageValidator", e.what());
         continue;
       }
       // initalise message_parser
       // save parsed data in data object.
-      try
-      {
+      try {
         hpDataParser message_parser(message_array);
         message_parser.parse_message(data_obj);
-      }
-      catch (const std::exception &e)
-      {
-        std::cerr << "\nError " << e.what() << "\n";
+        Logger::logLatestMessage("Successfully parsed message data");
+      } catch (const std::exception &e) {
+        Logger::logError("DataParser", std::string("Failed to parse message: ") + e.what());
       }
       raw_hp_message.clear();
     }
+    
     try {
       mqtt_publisher.publishAllData(data_obj, site, deviceId);
-    }
-    catch (const std::exception &e) {
+      Logger::logLatestMessage("Data published successfully to MQTT");
+    } catch (const std::exception &e) {
+      Logger::logError("MQTT", std::string("Failed to publish data: ") + e.what());
       std::cerr << "Failed to publish MQTT data: " << e.what() << "\n";
     }
     // write registers every loop so heartbeat and last-known values are always exposed
