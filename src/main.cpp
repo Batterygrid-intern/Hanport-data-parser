@@ -4,8 +4,7 @@
 #include "hpData.hpp"
 #include "hpSerialRead.hpp"
 #include "hpModbuss.hpp"
-#include "Logger.hpp"
-#include "Config.hpp"
+// #include "Logger.hpp"   // removed: using std::cout / std::cerr instead
 #include <iostream>
 #include <cstdlib>
 #include <iomanip>
@@ -13,53 +12,8 @@
 #include <chrono>
 #include <cstdint>
 #include <cstring>
-#ifndef EX_DATA_PATH
-#define EX_DATA_PATH "ex_data"
-#endif
-#ifndef MAX_TRIES
-#define MAX_TRIES 5
-#endif
-
-#ifndef LOG_FILE_PATH
-#define LOG_FILE_PATH "/var/log/hanport/hanport.log"
-#endif
-
-// Initialize the system and set up error handling
-void initializeSystem() {
-    try {
-        Logger::init(LOG_FILE_PATH);
-        Logger::logLatestMessage("System initialization started");
-    } catch (const std::exception& e) {
-        std::cerr << "Failed to initialize logging system: " << e.what() << std::endl;
-        throw;
-    }
-}
 
 
-//SETUP TTYAMA0 DEVICE TO INTERPRATE MESSAGE CORRECTLY ACCODRING TO THE HANPORT PROTOCOL (1 time thing at start-up)
-/***********************************************************************/
-/*1. READ DATA FROM SERIAL PORT TTYAMA0
-  2. WRITE DATA TO FILE
-  ? do we want to read every 10 seconds or activate dr pin every... */
-
-//HANPORTDATA PARSER
-/**********************************************************************/
-/*3. READ DATA FROM FILE, VALIDATE AND PARSE IT TO JSON (formatted string?) save in std::map?
-  4. Parse to string attribute inside class? 
-  ? what do we want to do with the data?*/
-
-//MQTT 
-/***********************************************************************/
-/*5.BROKER RUNNING IN DOCKER CONTAINER ON SAME DEVICE
-  6.PUBLISH TO TOPIC..... to broker broker inserts in database?*/
- 
-//MODBUS
-/***********************************************************************/
-
-//DOCUMENTATION
-/***********************************************************************/
-/*1. write comments and document application
- */
 int main(int argc, char** argv)
 {
   // parse command line options
@@ -87,18 +41,8 @@ int main(int argc, char** argv)
   hpData data_obj;
   std::vector<uint8_t> raw_hp_message;
   // open serial port
-  // Determine config path: allow override with HANPORT_CONF env var
-  Config cfg;
-  std::string cfgPath = std::getenv("HANPORT_CONF") ? std::string(std::getenv("HANPORT_CONF")) : std::string("app.ini");
-  std::string cfgErr;
-  if (!cfg.loadFromFile(cfgPath, cfgErr)) {
-    // If config not found, log and continue with defaults
-    Logger::logError("Init", "Failed to load config '" + cfgPath + "': " + cfgErr);
-  }
 
-  // Serial path: can be set in config under [serial] path=...
-  std::string serialPath = cfg.get("serial", "path", "/dev/ttyAMA0");
-  const char *SERIAL_PORT = serialPath.c_str();
+  const char *SERIAL_PORT = "/dev/ttyAMA0";
   // construct serial_reader with default attributes.
   hpSerialRead serial_reader;
 
@@ -107,42 +51,41 @@ int main(int argc, char** argv)
   // register conversion and packing are provided by hpModbuss (see set_from_hpData)
   // start modbus server to expose hpData on registers
 
-  // initialize mqtt client using values from config (falls back to sensible defaults)
-  // TODO: consider env overrides for production (e.g. HANPORT_MQTT_BROKER)
-  const std::string brokerAddress = cfg.get("mqtt", "broker", "localhost:1883");
-  const std::string clientId = cfg.get("mqtt", "client_id", "1");
-  const std::string willTopic = cfg.get("mqtt", "will_topic", "hanport_client/status");
-  const std::string willMessage = cfg.get("mqtt", "will_message", "offline");
-  const std::string site = cfg.get("mqtt", "site", "bgs-office");
-  const std::string deviceId = cfg.get("mqtt", "device_id", "hanport_meter_01");
-  const std::string userName = cfg.get("mqtt", "username", "mqtt_user");
-  const std::string password = cfg.get("mqtt", "password", "mqtt_password");
-  const std::string measurement_topic = cfg.get("mqtt", "measurement_topic", "hanport_data");
-
+  // initialize mqtt client using hardcoded values
+  const std::string brokerAddress = "localhost:1883";
+  const std::string clientId = "hanport_client";
+  const std::string willTopic = "hanport_client/status";
+  const std::string willMessage = "offline";
+  const std::string site = "bgs-office";
+  const std::string deviceId = "hanport_meter_01";
+  const std::string userName = "mqtt_user";
+  const std::string password = "mqtt_password";
+  const std::string measurement_topic = "hanport_data";
+  
   HpMqttPub mqtt_publisher(brokerAddress, clientId, site, deviceId);
   mqtt_publisher.buildTopic(measurement_topic);
   mqtt_publisher.setCrendetials(userName, password);
   mqtt_publisher.setLastWill(willTopic, willMessage);
   if (mqtt_publisher.connect()) {
-    Logger::logLatestMessage("Connected to MQTT broker at " + brokerAddress);
+    std::cout << "Connected to MQTT broker at " << brokerAddress << std::endl;
   } else {
-    Logger::logError("MQTT", "Failed to connect to MQTT broker at " + brokerAddress);
+    std::cerr << "MQTT: Failed to connect to MQTT broker at " << brokerAddress << std::endl;
   }
 
   // initialize modbus server
   hpModbuss modbus_server(static_cast<uint16_t>(port));
   try {
     modbus_server.start();
-    Logger::logLatestMessage("Modbus server started on port " + std::to_string(port));
+    std::cout << "Modbus server started on port " << std::to_string(port) << std::endl;
   } catch (const std::exception &e) {
-    Logger::logError("Modbus", std::string("Failed to start modbus server: ") + e.what());
+    std::cerr << "Modbus: Failed to start modbus server: " << e.what() << std::endl;
     // continue without modbus, main functionality still runs
   }
   
   try {
     serial_reader.openPort(SERIAL_PORT);
   } catch (std::exception &e) {
-    Logger::logError("SerialPort", std::string("Failed to open serial port: ") + e.what());
+    std::cerr << "SerialPort: Failed to open serial port: " << e.what() << std::endl;
     throw; // Re-throw as this is critical
   }
 
@@ -181,14 +124,14 @@ int main(int argc, char** argv)
                                 std::to_string(message_validator.get_calculated_crc()) +
                                 " Transmitted: " + 
                                 std::to_string(message_validator.get_transmitted_crc());
-          Logger::logError("MessageValidator", crcError);
+          std::cerr << "MessageValidator: " << crcError << std::endl;
           throw std::runtime_error("Data invalid: " + crcError);
         }
         
-        Logger::logLatestMessage("Message validated successfully - CRC check passed");
+        std::cout << "Message validated successfully - CRC check passed" << std::endl;
         message_array = message_validator.message_to_string_arr();
       } catch (const std::exception &e) {
-        Logger::logError("MessageValidator", e.what());
+        std::cerr << "MessageValidator: " << e.what() << std::endl;
         continue;
       }
       // initalise message_parser
@@ -196,19 +139,18 @@ int main(int argc, char** argv)
       try {
         hpDataParser message_parser(message_array);
         message_parser.parse_message(data_obj);
-        Logger::logLatestMessage("Successfully parsed message data");
+        std::cout << "Successfully parsed message data" << std::endl;
       } catch (const std::exception &e) {
-        Logger::logError("DataParser", std::string("Failed to parse message: ") + e.what());
+        std::cerr << "DataParser: Failed to parse message: " << e.what() << std::endl;
       }
       raw_hp_message.clear();
     }
     
     try {
       mqtt_publisher.publishAllData(data_obj, site, deviceId);
-      Logger::logLatestMessage("Data published successfully to MQTT");
+      std::cout << "Data published successfully to MQTT" << std::endl;
     } catch (const std::exception &e) {
-      Logger::logError("MQTT", std::string("Failed to publish data: ") + e.what());
-      std::cerr << "Failed to publish MQTT data: " << e.what() << "\n";
+      std::cerr << "MQTT: Failed to publish data: " << e.what() << std::endl;
     }
     // write registers every loop so heartbeat and last-known values are always exposed
     try {

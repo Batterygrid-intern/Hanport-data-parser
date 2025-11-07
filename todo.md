@@ -1,5 +1,5 @@
 # Todo config
-1. Välj vad för typ av logfil jag ska läsa ifrån(hur den ska vara strukturerad)
+1. Välj vad för typ av configfil jag ska läsa ifrån(hur den ska vara strukturerad)
 2. strukturera en config class som kan läsa och sätta configs för alla konfigurations variabler i main
 
 # Todo main.cpp
@@ -18,4 +18,6 @@
 6. skapa ett script som konfigurerar en miljö för hanportsläsning.
 7. hur startar jag och kontrollerar programmet? kan jag återställa remote? kan jag styra remote? 
 
-
+# Todo Documentation
+1. Lägg till en tydlig tfhw för projektet
+2. Lägg till dokumentation i koden

@@ -3,7 +3,6 @@
 #include <string>
 #include <memory>
 #include <mqtt/async_client.h>
-#include "Config.hpp"
 #include <hpData.hpp>
 
 
