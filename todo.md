@@ -1,10 +1,10 @@
 # Todo config
-1. implementera configen i main 
 # Todo main.cpp
 1. rensa upp main, säkerställ att jag loggar allt och har dynamsik configurering utifrån filen som laddas in i projektet
 2. hur startar jag programmet? vart läser den inputs ifrån från fil också?
 3. starta med argument till path för app.ini fil 
-
+# mqttpub
+1. läs igenom och förstå hur topicen byggs( testa med broker först på raspberry pi)
 # Todo logger
 1. bygg en logg modul som skriver allt till en logg fil så vi kan se vad som händer
 2. /tmp/hplogger.log
@@ -19,6 +19,9 @@
 7. hur startar jag och kontrollerar programmet? kan jag återställa remote? kan jag styra remote? 
 8. när jag startar programmet skickar jag med ett argument för vart config filen ligger
 9. installera programmet i /usr/local/bin
+10. ftp server för uppdateringar?
+11. skicka över binärfil med statiska bibliotek?
+
 
 # Todo Documentation
 1. Lägg till en tydlig tfhw för projektet
