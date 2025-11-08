@@ -4,6 +4,7 @@
 #include "hpData.hpp"
 #include "hpSerialRead.hpp"
 #include "hpModbuss.hpp"
+#include "config.hpp"
 // #include "Logger.hpp"   // removed: using std::cout / std::cerr instead
 #include <iostream>
 #include <cstdlib>
@@ -12,39 +13,48 @@
 #include <chrono>
 #include <cstdint>
 #include <cstring>
-
+#include <vector>
 
 int main(int argc, char** argv)
 {
   // parse command line options
-  int port = 1502; // default non-privileged port
-  for (int i = 1; i < argc; ++i) {
+  //build class for this
+  std::string configFilePath = "configs/app.ini";
+  for (int i = 1; i < argc; ++i)
+  {
     std::string a(argv[i]);
-    if (a == "--port" || a == "-p") {
-      if (i + 1 >= argc) {
-        std::cerr << "Missing value for --port\n";
+    if (a == "--config" || a == "-c")
+    {
+      if (i + 1 >= argc)
+      {
+        std::cerr << "Missing value for --config\n";
         return 1;
       }
-      try {
-        port = std::stoi(argv[++i]);
-      } catch (...) {
-        std::cerr << "Invalid port value\n";
-        return 1;
-      }
-    } else if (a == "--help" || a == "-h") {
-      std::cout << "Usage: " << argv[0] << " [--port <port>]\n";
+      configFilePath = argv[++i];
+    }
+    else if (a == "--help" || a == "-h")
+    {
+      std::cout << "Usage: " << argv[0] << " [--config <config_file>]\n";
       return 0;
     }
   }
 
+  //initialize config file and read from file.
+  Config cfg;
+  std::string err;
+  try {
+    if (!cfg.loadFromFile(configFilePath, err)) {
+      std::cerr << "Config: Failed to load config file: " << err << std::endl;
+      return 1;
+    }
+  } catch (const std::exception &e) {
+    std::cerr << "Config: unexcpected error while loading config file: " << e.what() << std::endl;
+    return 1;
+  }
   //initialize data object to store parsed data
   hpData data_obj;
   std::vector<uint8_t> raw_hp_message;
-  // open serial port
 
-  const char *SERIAL_PORT = "/dev/ttyAMA0";
-  // construct serial_reader with default attributes.
-  hpSerialRead serial_reader;
 
   // heartbeat counter (ticks every loop cycle) - will be stored in time_stamp
   float heartbeat = 0.0f;
@@ -52,16 +62,16 @@ int main(int argc, char** argv)
   // start modbus server to expose hpData on registers
 
   // initialize mqtt client using hardcoded values
-  const std::string brokerAddress = "localhost:1883";
-  const std::string clientId = "hanport_client";
-  const std::string willTopic = "hanport_client/status";
-  const std::string willMessage = "offline";
-  const std::string site = "bgs-office";
-  const std::string deviceId = "hanport_meter_01";
-  const std::string userName = "mqtt_user";
-  const std::string password = "mqtt_password";
-  const std::string measurement_topic = "hanport_data";
-  
+  const std::string brokerAddress = cfg.get("MQTT", "BROKER", "localhost:1883");
+  const std::string clientId = cfg.get("MQTT", "CLIENT_ID", "hanport_client");
+  const std::string willTopic = cfg.get("MQTT", "WILL_TOPIC", "hanport_client/status");
+  const std::string willMessage = cfg.get("MQTT", "WILL_MESSAGE", "offline");
+  const std::string site = cfg.get("MQTT", "SITE_ID", "bgs-office");
+  const std::string deviceId = cfg.get("MQTT", "DEVICE_ID", "hanport_meter_01");
+  const std::string userName = cfg.get("MQTT", "USERNAME", "mqtt_user");
+  const std::string password = cfg.get("MQTT", "PASSWORD", "mqtt_password");
+  const std::string measurement_topic = cfg.get("MQTT", "MEASUREMENT_TOPIC", "hanport_data");
+
   HpMqttPub mqtt_publisher(brokerAddress, clientId, site, deviceId);
   mqtt_publisher.buildTopic(measurement_topic);
   mqtt_publisher.setCrendetials(userName, password);
@@ -71,8 +81,9 @@ int main(int argc, char** argv)
   } else {
     std::cerr << "MQTT: Failed to connect to MQTT broker at " << brokerAddress << std::endl;
   }
-
+  
   // initialize modbus server
+  const int port = std::stoi(cfg.get("MODBUS", "PORT", "1800"));
   hpModbuss modbus_server(static_cast<uint16_t>(port));
   try {
     modbus_server.start();
@@ -81,7 +92,10 @@ int main(int argc, char** argv)
     std::cerr << "Modbus: Failed to start modbus server: " << e.what() << std::endl;
     // continue without modbus, main functionality still runs
   }
-  
+
+  const char *SERIAL_PORT = cfg.get("SERIALPORT", "PATH", "/dev/ttyAMA0").c_str(); 
+  // construct serial_reader with default attributes.
+  hpSerialRead serial_reader;
   try {
     serial_reader.openPort(SERIAL_PORT);
   } catch (std::exception &e) {

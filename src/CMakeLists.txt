@@ -37,7 +37,13 @@ target_link_libraries(HpMqttPub
         PUBLIC
         PahoMqttCpp::paho-mqttpp3
 )
-#build Config
+
+#Config
+add_library(config STATIC config.cpp)
+target_include_directories(config
+    PUBLIC
+    ${CMAKE_SOURCE_DIR}/include
+)
 #Build logger
 
 # Let the source know libmodbus was found (so code can #ifdef LIBMODBUS_FOUND)
@@ -50,5 +56,6 @@ target_link_libraries(${PROJECT_NAME}
     hpData
     hpSerialRead
     hpModbuss
+    config
     HpMqttPub
 )

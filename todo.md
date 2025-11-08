@@ -1,4 +1,5 @@
 # Todo config
+1. implementera configen i main 
 # Todo main.cpp
 1. rensa upp main, säkerställ att jag loggar allt och har dynamsik configurering utifrån filen som laddas in i projektet
 2. hur startar jag programmet? vart läser den inputs ifrån från fil också?
@@ -6,7 +7,7 @@
 
 # Todo logger
 1. bygg en logg modul som skriver allt till en logg fil så vi kan se vad som händer
-
+2. /tmp/hplogger.log
 # Todo deploy
 
 1. ta reda på hur jag kan skapa olika versioner av min kod.
@@ -16,6 +17,8 @@
 5. Sätt upp en miljö med rätt configurationer fetchade bibliotek och beroenden.
 6. skapa ett script som konfigurerar en miljö för hanportsläsning.
 7. hur startar jag och kontrollerar programmet? kan jag återställa remote? kan jag styra remote? 
+8. när jag startar programmet skickar jag med ett argument för vart config filen ligger
+9. installera programmet i /usr/local/bin
 
 # Todo Documentation
 1. Lägg till en tydlig tfhw för projektet

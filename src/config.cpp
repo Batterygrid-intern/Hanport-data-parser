@@ -12,7 +12,7 @@
 // The parser stores data in an unordered_map<string, unordered_map<string,string>>
 // where outer map keys are section names and inner map keys are keys within the section.
 
-#include "Config.hpp"
+#include "config.hpp"
 #include <fstream>
 #include <sstream>
 #include <algorithm>
