@@ -22,11 +22,14 @@
 10. ftp server för uppdateringar?
 11. skicka över binärfil med statiska bibliotek?
 
-
+uppdatera min logg fil bättre så den rensas? och så den loggar om en kabel förlorar kontakt eller om en läsning inte sker på ett tag inte skicka massa rådata skicka test värden? testa att koppla upp modbussen också...
 # Todo Documentation
 1. Lägg till en tydlig tfhw för projektet
 2. Lägg till dokumentation i koden
-
+3. bygg en config fil och setup för en broker 
 # Notes
 
 behöver konfigurera en broker för att lyssan på tls och endast på uppsatta clienter med inlogg och lösenord 
+ändra min loggning så jag kan 
+
+
