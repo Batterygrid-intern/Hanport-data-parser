@@ -54,7 +54,7 @@ int main(int argc, char** argv)
     return 1;
   }
   // create logger from config so log path can be configured per-site
-  const std::string logPath = cfg.get("LOGGING", "FILE", "/var/log/hanport.log");
+  const std::string logPath = cfg.get("LOGGER", "PATH");
   hpLogger logger(logPath);
   //initialize data object to store parsed data
   hpData data_obj;
