@@ -1,0 +1,3 @@
+[2025-11-10 12:21:06] ERROR: MQTT: Failed to connect to MQTT broker at localhost:1883
+[2025-11-10 12:21:06] INFO: Modbus server started on port 1800
+[2025-11-10 12:21:08] ERROR: SerialPort: Failed to open serial port: Failed to open serial port: /dev/ttyAMA0

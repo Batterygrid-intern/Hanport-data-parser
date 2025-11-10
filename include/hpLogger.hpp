@@ -21,7 +21,7 @@ class hpLogger{
     public:
         hpLogger(const std::string& filepath);
         void log(LogLevel level, const std::string& message);
-        char* getTimeStamp();
+        std::string getTimeStamp() const;
     private:
         std::ofstream logFile_;
         std::string levelToString(LogLevel level);

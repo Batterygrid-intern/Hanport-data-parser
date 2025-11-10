@@ -5,9 +5,11 @@
 #include "hpSerialRead.hpp"
 #include "hpModbuss.hpp"
 #include "config.hpp"
+#include "hpLogger.hpp"
 // #include "Logger.hpp"   // removed: using std::cout / std::cerr instead
 #include <iostream>
 #include <cstdlib>
+#include <sstream>
 #include <iomanip>
 #include <thread>
 #include <chrono>
@@ -17,7 +19,7 @@
 
 int main(int argc, char** argv)
 {
-  // parse command line options
+  //parse command line options
   //build class for this
   std::string configFilePath = "configs/app.ini";
   for (int i = 1; i < argc; ++i)
@@ -51,6 +53,9 @@ int main(int argc, char** argv)
     std::cerr << "Config: unexcpected error while loading config file: " << e.what() << std::endl;
     return 1;
   }
+  // create logger from config so log path can be configured per-site
+  const std::string logPath = cfg.get("LOG", "FILE", "/var/log/hanport.log");
+  hpLogger logger(logPath);
   //initialize data object to store parsed data
   hpData data_obj;
   std::vector<uint8_t> raw_hp_message;
@@ -77,9 +82,9 @@ int main(int argc, char** argv)
   mqtt_publisher.setCrendetials(userName, password);
   mqtt_publisher.setLastWill(willTopic, willMessage);
   if (mqtt_publisher.connect()) {
-    std::cout << "Connected to MQTT broker at " << brokerAddress << std::endl;
+    logger.log(INFO, std::string("Connected to MQTT broker at ") + brokerAddress);
   } else {
-    std::cerr << "MQTT: Failed to connect to MQTT broker at " << brokerAddress << std::endl;
+    logger.log(ERROR, std::string("MQTT: Failed to connect to MQTT broker at ") + brokerAddress);
   }
   
   // initialize modbus server
@@ -87,9 +92,9 @@ int main(int argc, char** argv)
   hpModbuss modbus_server(static_cast<uint16_t>(port));
   try {
     modbus_server.start();
-    std::cout << "Modbus server started on port " << std::to_string(port) << std::endl;
+    logger.log(INFO, std::string("Modbus server started on port ") + std::to_string(port));
   } catch (const std::exception &e) {
-    std::cerr << "Modbus: Failed to start modbus server: " << e.what() << std::endl;
+    logger.log(ERROR, std::string("Modbus: Failed to start modbus server: ") + e.what());
     // continue without modbus, main functionality still runs
   }
 
@@ -99,7 +104,7 @@ int main(int argc, char** argv)
   try {
     serial_reader.openPort(SERIAL_PORT);
   } catch (std::exception &e) {
-    std::cerr << "SerialPort: Failed to open serial port: " << e.what() << std::endl;
+    logger.log(ERROR, std::string("SerialPort: Failed to open serial port: ") + e.what());
     throw; // Re-throw as this is critical
   }
 
@@ -107,7 +112,7 @@ int main(int argc, char** argv)
   try {
     modbus_server.set_from_hpData(data_obj, 0);
   } catch (const std::exception &e) {
-    std::cerr << "Initial modbus register write failed: " << e.what() << "\n";
+    logger.log(WARN, std::string("Initial modbus register write failed: ") + e.what());
   }
 
   while (true)
@@ -117,11 +122,13 @@ int main(int argc, char** argv)
     // always expose heartbeat even if no serial message arrives
     data_obj.time_stamp = heartbeat;
     raw_hp_message = serial_reader.hpRead();
-    for (uint8_t &i : raw_hp_message)
-    {
-      std::cout << i;
+    if (!raw_hp_message.empty()) {
+      std::ostringstream oss;
+      for (uint8_t &b : raw_hp_message) {
+        oss << std::to_string(b) << " ";
+      }
+      logger.log(DEBUG, std::string("Raw serial bytes: ") + oss.str());
     }
-    std::cout << std::endl;
 
     std::vector<std::string> message_array;
     // just for use when testing
@@ -138,14 +145,14 @@ int main(int argc, char** argv)
                                 std::to_string(message_validator.get_calculated_crc()) +
                                 " Transmitted: " + 
                                 std::to_string(message_validator.get_transmitted_crc());
-          std::cerr << "MessageValidator: " << crcError << std::endl;
+          logger.log(ERROR, std::string("MessageValidator: ") + crcError);
           throw std::runtime_error("Data invalid: " + crcError);
         }
         
-        std::cout << "Message validated successfully - CRC check passed" << std::endl;
+        logger.log(INFO, "Message validated successfully - CRC check passed");
         message_array = message_validator.message_to_string_arr();
       } catch (const std::exception &e) {
-        std::cerr << "MessageValidator: " << e.what() << std::endl;
+        logger.log(WARN, std::string("MessageValidator: ") + e.what());
         continue;
       }
       // initalise message_parser
@@ -153,24 +160,24 @@ int main(int argc, char** argv)
       try {
         hpDataParser message_parser(message_array);
         message_parser.parse_message(data_obj);
-        std::cout << "Successfully parsed message data" << std::endl;
+        logger.log(INFO, "Successfully parsed message data");
       } catch (const std::exception &e) {
-        std::cerr << "DataParser: Failed to parse message: " << e.what() << std::endl;
+        logger.log(ERROR, std::string("DataParser: Failed to parse message: ") + e.what());
       }
       raw_hp_message.clear();
     }
     
     try {
       mqtt_publisher.publishAllData(data_obj, site, deviceId);
-      std::cout << "Data published successfully to MQTT" << std::endl;
+      logger.log(INFO, "Data published successfully to MQTT");
     } catch (const std::exception &e) {
-      std::cerr << "MQTT: Failed to publish data: " << e.what() << std::endl;
+      logger.log(ERROR, std::string("MQTT: Failed to publish data: ") + e.what());
     }
     // write registers every loop so heartbeat and last-known values are always exposed
     try {
       modbus_server.set_from_hpData(data_obj, 0);
     } catch (const std::exception &e) {
-      std::cerr << "Failed to update modbus registers: " << e.what() << "\n";
+      logger.log(WARN, std::string("Failed to update modbus registers: ") + e.what());
     }
   }
   // stop modbus server cleanly before exiting

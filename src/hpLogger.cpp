@@ -11,7 +11,7 @@ hpLogger::hpLogger(const std::string& filepath) {
 
 void hpLogger::log(LogLevel level, const std::string& message){
     //get time stamp for loggmessage
-    const char* timestamp = getTimeStamp();
+    std::string timestamp = getTimeStamp();
     //the entry / message to append to file
     std::ostringstream logEntry;
     logEntry << "[" << timestamp << "] "
@@ -28,10 +28,26 @@ void hpLogger::log(LogLevel level, const std::string& message){
 }
 
 
-char* hpLogger::getTimeStamp(){
+std::string hpLogger::getTimeStamp() const {
     time_t now = time(0);
-    tm* timeInfo = localtime(&now);
+    tm timeInfo;
+#if defined(_WIN32) || defined(_WIN64)
+    localtime_s(&timeInfo, &now);
+#else
+    localtime_r(&now, &timeInfo);
+#endif
     char timestamp[20];
-    strftime(timestamp,sizeof(timestamp), "%Y-%m-%d %H:%M:%S",timeInfo);
-    return timestamp;
+    strftime(timestamp, sizeof(timestamp), "%Y-%m-%d %H:%M:%S", &timeInfo);
+    return std::string(timestamp);
+}
+
+std::string hpLogger::levelToString(LogLevel level) {
+    switch (level) {
+        case DEBUG: return "DEBUG";
+        case INFO: return "INFO";
+        case WARN: return "WARN";
+        case ERROR: return "ERROR";
+        case CRITICAL: return "CRITICAL";
+        default: return "UNKNOWN";
+    }
 }

@@ -27,3 +27,6 @@
 1. Lägg till en tydlig tfhw för projektet
 2. Lägg till dokumentation i koden
 
+# Notes
+
+behöver konfigurera en broker för att lyssan på tls och endast på uppsatta clienter med inlogg och lösenord 
