@@ -12,15 +12,18 @@ hpLogger::hpLogger(const std::string& filepath) {
 void hpLogger::log(LogLevel level, const std::string& message){
     //get time stamp for loggmessage
     const char* timestamp = getTimeStamp();
-
+    //the entry / message to append to file
     std::ostringstream logEntry;
     logEntry << "[" << timestamp << "] "
              << levelToString(level) << ": " << message
              << std::endl;
-
+    //append message to file
     if (logFile_.is_open()) {
         logFile_ << logEntry.str();
         logFile_.flush();
+    }
+    else {
+        std::cerr << "Failed to append message to file" << std::endl;
     }
 }
 
