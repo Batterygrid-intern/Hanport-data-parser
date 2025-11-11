@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(test LANGUAGES C CXX)
+project(Hanport-data LANGUAGES C CXX)
 find_package(PkgConfig REQUIRED)
 find_package(PahoMqttCpp REQUIRED)
 pkg_check_modules(LIBMODBUS REQUIRED libmodbus)

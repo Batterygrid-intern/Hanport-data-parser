@@ -55,17 +55,31 @@ for script in install.sh install-deps.sh deploy.sh; do
   fi
 done
 
-# Optional: bundle shared libraries (if you want fully portable package)
-# Uncomment the section below to bundle .so files from /usr/local/lib
-# mkdir -p "$PACKAGE_DIR/lib"
-# for lib in libpaho-mqttpp3.so* libpaho-mqtt3as.so* libmodbus.so*; do
-#   if [[ -f "/usr/local/lib/$lib" ]]; then
-#     cp -P "/usr/local/lib/$lib" "$PACKAGE_DIR/lib/"
-#   fi
-# done
-# if [[ -n "$(ls -A "$PACKAGE_DIR/lib" 2>/dev/null)" ]]; then
-#   echo "✓ Bundled shared libraries in lib/"
-# fi
+# Bundle shared libraries for fully portable package
+echo "Bundling shared libraries..."
+mkdir -p "$PACKAGE_DIR/lib"
+
+# Bundle Paho MQTT libraries
+for lib in libpaho-mqttpp3.so* libpaho-mqtt3as.so* libpaho-mqtt3a.so* libpaho-mqtt3c.so* libpaho-mqtt3cs.so*; do
+  if [[ -f "/usr/local/lib/$lib" ]]; then
+    cp -P "/usr/local/lib/$lib" "$PACKAGE_DIR/lib/"
+  fi
+done
+
+# Bundle libmodbus if installed in /usr/local
+for lib in libmodbus.so*; do
+  if [[ -f "/usr/local/lib/$lib" ]]; then
+    cp -P "/usr/local/lib/$lib" "$PACKAGE_DIR/lib/"
+  fi
+done
+
+if [[ -n "$(ls -A "$PACKAGE_DIR/lib" 2>/dev/null)" ]]; then
+  echo "✓ Bundled shared libraries in lib/"
+  ls -lh "$PACKAGE_DIR/lib/"
+else
+  echo "Warning: No libraries found in /usr/local/lib to bundle" >&2
+  echo "The package will require runtime dependencies to be installed on target" >&2
+fi
 
 # Create README
 cat > "$PACKAGE_DIR/README.txt" <<EOF
