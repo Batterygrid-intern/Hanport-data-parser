@@ -4,7 +4,7 @@ transmitt the data collected using modbus and mqtt protocol.
 
 
 
-# Configure (UART) serial on the rpi4 (RX pin)
+# Activat/Configure (UART) serial on the rpi4 (RX pin)
 
 # Installations
 * automake
@@ -29,3 +29,7 @@ transmitt the data collected using modbus and mqtt protocol.
 
 ### PahoMqttCpp
 * [PahoMqttCpp](https://github.com/eclipse-paho/paho.mqtt.cpp) follow the installation instructions for version 1.5
+
+# Config
+The program reads configurations from an ini file
+Configurations are used for modbus and mqtt configruations,to set which serialport to read from and where to write log output too.
