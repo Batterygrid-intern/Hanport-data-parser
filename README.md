@@ -20,8 +20,8 @@ transmitt the data collected using modbus and mqtt protocol.
 * build-essential
 
 ## Compilers
-* This project needs atleast a fully compliant c++17 compiler.
-* a c v11 compiler
+* Fully compliant c++17 compiler.
+* C v11 compiler
 
 ## Install external libraries
 ### Libmodbus
