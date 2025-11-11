@@ -1,4 +1,4 @@
-# raspberrypi service to read data from the hanport on the swedish electricity meter.
+# rpi-hanport module
 
 
 # External Libraries used: 
