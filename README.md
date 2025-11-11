@@ -1,10 +1,31 @@
 # rpi-hanport
-This is a project built on the raspberry pi to read data from a swedish electricity meter using the hanport interface and to
+This is a project built on the raspberry pi 4 to read data from a swedish electricity meter using the hanport interface and to
 transmitt the data collected using modbus and mqtt protocol.
 
-# install external libraries
-## Libmodbus
+
+
+# Configure (UART) serial on the rpi4 (RX pin)
+
+# Installations
+* automake
+* autoconf
+* libtool
+* openssl
+* build-essential
+* libssl-dev
+  
+## build tools 
+* cmake version 3.16
+* make
+* build-essential
+
+## Compilers
+* This project needs atleast a fully compliant c++17 compiler.
+* a c v11 compiler
+
+## Install external libraries
+### Libmodbus
 * [Libmodbus](https://github.com/stephane/libmodbus) follow the installation instructions.
 
-## PahoMqttCpp
-* [PahoMqttCpp](https://github.com/eclipse-paho/paho.mqtt.cpp) follow the installation instructions.
+### PahoMqttCpp
+* [PahoMqttCpp](https://github.com/eclipse-paho/paho.mqtt.cpp) follow the installation instructions for version 1.5
