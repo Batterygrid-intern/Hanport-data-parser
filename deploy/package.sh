@@ -48,6 +48,8 @@ fi
 cp deploy/*.ini "$STAGING/hanport/" 2>/dev/null || true
 cp deploy/hanport.service "$STAGING/hanport/" 2>/dev/null || cp deploy/hanport.serivce "$STAGING/hanport/hanport.service" 2>/dev/null || true
 cp deploy/install.sh "$STAGING/hanport/"
+cp deploy/deploy.sh "$STAGING/hanport/" 2>/dev/null || true
+cp deploy/install-deps.sh "$STAGING/hanport/" 2>/dev/null || true
 
 # Create install scripts if they don't exist
 if [ ! -f "deploy/install-deps.sh" ]; then
