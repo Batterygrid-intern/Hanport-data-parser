@@ -67,7 +67,7 @@ User=hanport
 Group=hanport
 WorkingDirectory=/var/lib/hanport
 Environment="LD_LIBRARY_PATH=/opt/hanport/lib:/usr/local/lib"
-ExecStart=/usr/local/bin/Hanport-data /etc/hanport/config.ini
+ExecStart=/usr/local/bin/Hanport-data --config /etc/hanport/config.ini
 Restart=always
 RestartSec=10
 
