@@ -1,0 +1,23 @@
+# FTP Configuration for hanport deployment package fetcher
+# Source this file or pass it with --config flag to fetchzip.sh
+
+# FTP Server details
+FTP_HOST=ftp.example.com
+FTP_PORT=21
+FTP_USER=deploy_user
+FTP_PASS=your_password_here
+
+# Remote .zip file path on FTP server
+REMOTE_FILE=/releases/hanport-deploy.zip
+
+# Local download directory
+LOCAL_DIR=/tmp/hanport-download
+
+# Log file location
+LOG_FILE=/var/log/hanport-fetch.log
+
+# Cleanup archive after extraction (true/false)
+CLEANUP_ARCHIVE=true
+
+# Automatically run install.sh after extraction (true/false)
+AUTO_INSTALL=true
