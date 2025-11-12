@@ -37,7 +37,14 @@ trap "rm -rf $STAGING" EXIT
 # Copy files to staging
 mkdir -p "$STAGING/hanport"
 cp -r deploy/bin "$STAGING/hanport/"
-cp -r deploy/lib "$STAGING/hanport/"
+
+# Copy libraries with actual files
+if [ -d "deploy/lib" ] && [ "$(ls -A deploy/lib 2>/dev/null)" ]; then
+    cp -rP deploy/lib "$STAGING/hanport/"
+else
+    mkdir -p "$STAGING/hanport/lib"
+fi
+
 cp deploy/*.ini "$STAGING/hanport/" 2>/dev/null || true
 cp deploy/hanport.service "$STAGING/hanport/" 2>/dev/null || cp deploy/hanport.serivce "$STAGING/hanport/hanport.service" 2>/dev/null || true
 cp deploy/install.sh "$STAGING/hanport/"

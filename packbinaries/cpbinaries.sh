@@ -43,16 +43,16 @@ echo "[2/2] Copying shared library dependencies..."
 # Extract library paths from ldd output (only from /usr/local/lib)
 ldd "$BINARY_PATH" | grep '/usr/local/lib' | awk '{print $3}' | while read -r lib; do
   if [[ -f "$lib" ]]; then
-    # Copy the actual library file
-    cp -L "$lib" "$DEPLOY_DIR/lib/"
-    echo "  ✓ $(basename "$lib")"
-    
-    # Also copy all symlinks for this library
+    # Get the directory and base name
     lib_dir=$(dirname "$lib")
-    lib_name=$(basename "$lib" | sed 's/\.so\..*//')
-    find "$lib_dir" -name "${lib_name}.so*" -type l 2>/dev/null | while read -r symlink; do
-      cp -P "$symlink" "$DEPLOY_DIR/lib/" 2>/dev/null || true
+    lib_base=$(basename "$lib" | sed 's/\.so\..*//')
+    
+    # Copy all related files (actual .so files and symlinks)
+    find "$lib_dir" -name "${lib_base}.so*" \( -type f -o -type l \) | while read -r sofile; do
+      cp -P "$sofile" "$DEPLOY_DIR/lib/"
     done
+    
+    echo "  ✓ $(basename "$lib")"
   fi
 done
 
