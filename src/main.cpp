@@ -122,13 +122,13 @@ int main(int argc, char** argv)
     // always expose heartbeat even if no serial message arrives
     data_obj.time_stamp = heartbeat;
     raw_hp_message = serial_reader.hpRead();
-    if (!raw_hp_message.empty()) {
+    /*if (!raw_hp_message.empty()) {
       std::ostringstream oss;
       for (uint8_t &b : raw_hp_message) {
-        oss << std::to_string(b) << " ";
+        oss << b;
       }
       logger.log(DEBUG, std::string("Raw serial bytes: ") + oss.str());
-    }
+    }*/
 
     std::vector<std::string> message_array;
     // just for use when testing

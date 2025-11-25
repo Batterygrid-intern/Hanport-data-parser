@@ -7,7 +7,7 @@ hpSerialRead::~hpSerialRead(){
     closePort();
 } 
 void hpSerialRead::openPort(const char* serial_port_path){
-    this->serial_fd = open(serial_port_path, O_RDWR | O_NOCTTY);
+    this->serial_fd = open(serial_port_path,O_RDONLY);
     sleep(2);
     tcflush(this->serial_fd, TCIOFLUSH);
 
@@ -30,7 +30,7 @@ void hpSerialRead::setupPort(){
     hpSetupIflag(&this->tty);
     hpSetupCc(&this->tty);
 
-    cfsetispeed(&this->tty,BAUD_RATE);
+    cfsetispeed(&this->tty,B115200);
 
     if(tcsetattr(this->serial_fd,TCSANOW,&this->tty) != 0){
         std::string error = "Failed to set attributes for serial port";
@@ -60,8 +60,8 @@ void hpSerialRead::hpSetupIflag(struct termios *tty){
     tty->c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL); //Disable any special handling of recived bytes    
 }
 void hpSerialRead::hpSetupCc(struct termios *tty){
-    tty->c_cc[VTIME] = 255;
-    tty->c_cc[VMIN] = 0;
+    tty->c_cc[VTIME] = 10;
+    tty->c_cc[VMIN] = 1;
 }
 std::vector<uint8_t> hpSerialRead::hpRead()
 {
@@ -88,6 +88,7 @@ std::vector<uint8_t> hpSerialRead::hpRead()
         for (int i = 0; i < num_of_bytes; i++) 
         {   //extract each byte read
             uint8_t byte = read_buff[i];
+	    std::cout << byte;
             //compare to look for starting delimiter
             if(byte == '/')
             {  
@@ -111,7 +112,7 @@ std::vector<uint8_t> hpSerialRead::hpRead()
                 message.push_back(byte);
                 crc_bytes_read++;
                 if(crc_bytes_read == CRC_SIZE)
-                {
+                {   std::cout << "\n";
                     return message;
                 }
                 continue;
