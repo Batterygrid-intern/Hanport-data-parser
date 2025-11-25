@@ -7,7 +7,7 @@ hpSerialRead::~hpSerialRead(){
     closePort();
 } 
 void hpSerialRead::openPort(const char* serial_port_path){
-    this->serial_fd = open(serial_port_path,O_RDONLY);
+    this->serial_fd = open(serial_port_path, O_RDWR | O_NOCTTY);
     sleep(2);
     tcflush(this->serial_fd, TCIOFLUSH);
 
