@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.16)
 project(Hanport-data LANGUAGES C CXX)
 find_package(PkgConfig REQUIRED)
 find_package(PahoMqttCpp REQUIRED)
+#for psdlog
+find_package(Threads REQUIRED)
+find_package(spdlog REQUIRED)
+
 pkg_check_modules(LIBMODBUS REQUIRED libmodbus)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)

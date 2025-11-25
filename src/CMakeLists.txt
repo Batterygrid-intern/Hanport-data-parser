@@ -62,5 +62,5 @@ target_link_libraries(${PROJECT_NAME}
     hpModbuss
     config
     HpMqttPub
-    hpLogger
+    spdlog::spdlog_header_only
 )
