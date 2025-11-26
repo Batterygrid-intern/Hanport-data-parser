@@ -70,6 +70,18 @@ if ! ldconfig -p | grep -q libpaho-mqtt; then
     cd -
 fi
 
+# Check if spdlog is installed (needed at build time for headers)
+if [ ! -d "/usr/local/include/spdlog" ] && [ ! -d "/usr/include/spdlog" ]; then
+    echo ""
+    echo "Installing spdlog (header-only library)..."
+    cd /tmp
+    git clone https://github.com/gabime/spdlog.git
+    cd spdlog
+    cmake -B build -DSPDLOG_BUILD_SHARED=OFF
+    sudo cmake --build build --target install
+    cd -
+fi
+
 # Build Hanport
 echo ""
 echo "[3/4] Building Hanport..."
