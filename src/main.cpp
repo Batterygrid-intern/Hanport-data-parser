@@ -88,7 +88,7 @@ int main(int argc, char** argv)
   }
   
   // initialize modbus server
-  const int port = std::stoi(cfg.get("MODBUS", "PORT", "1800"));
+  const int port = std::stoi(cfg.get("MODBUS", "PORT", "502"));
   hpModbuss modbus_server(static_cast<uint16_t>(port));
   try {
     modbus_server.start();
