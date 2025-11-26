@@ -1,0 +1,27 @@
+[Unit]
+Description=Hanport Data Parser Service
+After=network.target
+
+[Service]
+Type=simple
+User=hanport
+Group=hanport
+WorkingDirectory=/var/lib/hanport
+Environment="LD_LIBRARY_PATH=/opt/hanport/lib:/usr/local/lib"
+ExecStart=/usr/local/bin/Hanport-data --config /etc/hanport/config.ini
+Restart=always
+RestartSec=10
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/log/hanport /var/lib/hanport
+
+# Allow binding to privileged ports (like 502 for Modbus)
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+
+[Install]
+WantedBy=multi-user.target

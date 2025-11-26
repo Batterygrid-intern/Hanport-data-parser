@@ -44,12 +44,6 @@ target_include_directories(config
     PUBLIC
     ${CMAKE_SOURCE_DIR}/include
 )
-add_library(hpLogger STATIC hpLogger.cpp)
-target_include_directories(hpLogger
-    PUBLIC    
-    ${CMAKE_SOURCE_DIR}/include
-)
-
 # Let the source know libmodbus was found (so code can #ifdef LIBMODBUS_FOUND)
 target_compile_definitions(hpModbuss PUBLIC LIBMODBUS_FOUND)
 # build executable and link to libraries
@@ -62,5 +56,5 @@ target_link_libraries(${PROJECT_NAME}
     hpModbuss
     config
     HpMqttPub
-    hpLogger
+    spdlog::spdlog_header_only
 )
