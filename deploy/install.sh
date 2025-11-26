@@ -12,6 +12,10 @@ echo "  → Installing binary..."
 sudo cp "$SCRIPT_DIR/bin/Hanport-data" /usr/local/bin/
 sudo chmod 755 /usr/local/bin/Hanport-data
 
+# Grant capability to bind to privileged ports (< 1024)
+echo "  → Granting network capabilities..."
+sudo setcap 'cap_net_bind_service=+ep' /usr/local/bin/Hanport-data
+
 # 2. Copy libraries to /opt/hanport/lib
 echo "  → Installing libraries..."
 sudo mkdir -p /opt/hanport/lib
