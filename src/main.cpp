@@ -53,8 +53,10 @@ int main(int argc, char** argv)
     return 1;
   }
   // create logger from config so log path can be configured per-site
-  auto logger = spdlog::daily_logger_st("daily_logger", cfg.get("LOGGING", "PATH", "var/log/hanport/hanport.log"), 23, 59);
+  // Daily logger creates new file at rotation time (00:00) and appends date to filename
+  auto logger = spdlog::daily_logger_mt("hanport_logger", cfg.get("LOGGER", "PATH", "/var/log/hanport/hanport.log"), 0, 0);
   logger->set_pattern("[%Y-%m-%d %H:%M:%S] [%l] %v");
+  logger->flush_on(spdlog::level::info);  // Flush immediately on info and above
   logger->info("Logger initialized");
   //initialize data object to store parsed data
   hpData data_obj;
