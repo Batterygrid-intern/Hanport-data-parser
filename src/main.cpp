@@ -56,6 +56,7 @@ int main(int argc, char** argv)
   // Daily logger creates new file at rotation time (00:00) and appends date to filename
   auto logger = spdlog::daily_logger_mt("hanport_logger", cfg.get("LOGGER", "PATH", "/var/log/hanport/hanport.log"), 0, 0);
   logger->set_pattern("[%Y-%m-%d %H:%M:%S] [%l] %v");
+  logger->set_level(spdlog::level::debug);  // Enable debug logging
   logger->flush_on(spdlog::level::info);  // Flush immediately on info and above
   logger->info("Logger initialized");
   //initialize data object to store parsed data
@@ -90,13 +91,17 @@ int main(int argc, char** argv)
   }
   
   // initialize modbus server
+  logger->info("Initializing Modbus server...");
   const int port = std::stoi(cfg.get("MODBUS", "PORT", "502"));
+  logger->debug("Modbus port from config: {}", port);
   hpModbuss modbus_server(static_cast<uint16_t>(port));
   try {
+    logger->debug("Attempting to start Modbus server on port {}...", port);
     modbus_server.start();
-    logger->info("Modbus server started on port {}", port);
+    logger->info("✓ Modbus server started successfully on port {}", port);
   } catch (const std::exception &e) {
-    logger->error("Modbus: Failed to start modbus server: {}", e.what());
+    logger->error("✗ Modbus: Failed to start modbus server on port {}: {}", port, e.what());
+    logger->warn("Continuing without Modbus - data will not be available via Modbus TCP");
     // continue without modbus, main functionality still runs
   }
 
@@ -111,8 +116,10 @@ int main(int argc, char** argv)
   }
 
   // initialize registers once so clients can read initial values immediately
+  logger->debug("Writing initial values to Modbus registers...");
   try {
     modbus_server.set_from_hpData(data_obj, 0);
+    logger->debug("✓ Initial Modbus registers written successfully");
   } catch (const std::exception &e) {
     logger->warn("Initial modbus register write failed: {}", e.what());
   }
@@ -178,6 +185,7 @@ int main(int argc, char** argv)
     // write registers every loop so heartbeat and last-known values are always exposed
     try {
       modbus_server.set_from_hpData(data_obj, 0);
+      logger->debug("Modbus registers updated (heartbeat: {})", data_obj.time_stamp);
     } catch (const std::exception &e) {
       logger->warn("Failed to update modbus registers: {}", e.what());
     }
