@@ -28,6 +28,10 @@ if ! id -u hanport > /dev/null 2>&1; then
     sudo useradd --system --no-create-home --shell /usr/sbin/nologin hanport
 fi
 
+# Add hanport user to dialout group for serial port access
+echo "  → Adding hanport to dialout group..."
+sudo usermod -a -G dialout hanport
+
 # 4. Copy config to /etc/hanport
 echo "  → Installing configuration..."
 sudo mkdir -p /etc/hanport
@@ -48,6 +52,12 @@ sudo chown hanport:hanport /var/lib/hanport
 echo "  → Creating log directory..."
 sudo mkdir -p /var/log/hanport
 sudo chown hanport:hanport /var/log/hanport
+sudo chmod 755 /var/log/hanport
+
+# Create initial log file with correct permissions
+sudo touch /var/log/hanport/hanport.log
+sudo chown hanport:hanport /var/log/hanport/hanport.log
+sudo chmod 644 /var/log/hanport/hanport.log
 
 # 7. Install systemd unit
 echo "  → Installing systemd unit..."
