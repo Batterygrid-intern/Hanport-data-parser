@@ -55,9 +55,9 @@ sudo chown hanport:hanport /var/log/hanport
 sudo chmod 755 /var/log/hanport
 
 # Create initial log file with correct permissions
-sudo touch /var/log/hanport/hanport.log
-sudo chown hanport:hanport /var/log/hanport/hanport.log
-sudo chmod 644 /var/log/hanport/hanport.log
+#sudo touch /var/log/hanport/hanport.log
+#sudo chown hanport:hanport /var/log/hanport/hanport.log
+#sudo chmod 644 /var/log/hanport/hanport.log
 
 # 7. Install systemd unit
 echo "  → Installing systemd unit..."
