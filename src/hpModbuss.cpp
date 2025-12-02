@@ -201,24 +201,24 @@ std::vector<uint16_t> hpModbuss::make_regs(const hpData &d) const {
     append_float(d.active_energy_export_total);
     append_float(d.reactive_energy_import_total);
     append_float(d.reactive_energy_export_total);
-    append_float(d.active_power_import);
-    append_float(d.active_power_export);
-    append_float(d.reactive_power_import);
-    append_float(d.reactive_power_export);
+    append_float(d.active_power_import * 1000);
+    append_float(d.active_power_export * 1000);
+    append_float(d.reactive_power_import * 1000);
+    append_float(d.reactive_power_export * 1000);
     // per-phase active power
-    append_float(d.l1_active_power_import);
-    append_float(d.l1_active_power_export);
-    append_float(d.l2_active_power_import);
-    append_float(d.l2_active_power_export);
-    append_float(d.l3_active_power_import);
-    append_float(d.l3_active_power_export);
+    append_float(d.l1_active_power_import * 1000);
+    append_float(d.l1_active_power_export * 1000);
+    append_float(d.l2_active_power_import * 1000);
+    append_float(d.l2_active_power_export * 1000);
+    append_float(d.l3_active_power_import * 1000);
+    append_float(d.l3_active_power_export * 1000);
     // per-phase reactive power
-    append_float(d.l1_reactive_power_import);
-    append_float(d.l1_reactive_power_export);
-    append_float(d.l2_reactive_power_import);
-    append_float(d.l2_reactive_power_export);
-    append_float(d.l3_reactive_power_import);
-    append_float(d.l3_reactive_power_export);
+    append_float(d.l1_reactive_power_import * 1000);
+    append_float(d.l1_reactive_power_export * 1000);
+    append_float(d.l2_reactive_power_import * 1000);
+    append_float(d.l2_reactive_power_export * 1000);
+    append_float(d.l3_reactive_power_import * 1000);
+    append_float(d.l3_reactive_power_export * 1000);
     // voltages
     append_float(d.l1_voltage_rms);
     append_float(d.l2_voltage_rms);
