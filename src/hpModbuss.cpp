@@ -188,6 +188,12 @@ std::vector<uint16_t> hpModbuss::float_to_regs(float f){
     uint16_t low = static_cast<uint16_t>(u & 0xFFFF);
     return std::vector<uint16_t>{low, high};
 }
+//static helper
+std::vector<uint16_t> hpModbuss::int_to_regs(int i){
+    uint16_t high = static_cast<uint16_t>((i >> 16) & 0xFFFF);
+    uint16_t low = static_cast<uint16_t>(i & 0xFFFF);
+    return std::vector<uint16_t>{low, high};
+}
 
 // Build register vector from hpData
 std::vector<uint16_t> hpModbuss::make_regs(const hpData &d) const {
@@ -196,29 +202,33 @@ std::vector<uint16_t> hpModbuss::make_regs(const hpData &d) const {
         auto parts = float_to_regs(v);
         registers.insert(registers.end(), parts.begin(), parts.end());
     };
-    append_float(d.heartbeat);
+    auto append_int = [&](const int v) {
+        auto parts = int_to_regs(v);
+        registers.insert(registers.end(), parts.begin(), parts.end());
+    };
+    append_int(d.heartbeat);
     append_float(d.active_energy_import_total);
     append_float(d.active_energy_export_total);
     append_float(d.reactive_energy_import_total);
     append_float(d.reactive_energy_export_total);
-    append_float(d.active_power_import * 1000);
-    append_float(d.active_power_export * 1000);
-    append_float(d.reactive_power_import * 1000);
-    append_float(d.reactive_power_export * 1000);
+    append_int(static_cast<int>(d.active_power_import * 1000));
+    append_int(static_cast<int>(d.active_power_export * 1000));
+    append_int(static_cast<int>(d.reactive_power_import * 1000));
+    append_int(static_cast<int>(d.reactive_power_export * 1000));
     // per-phase active power
-    append_float(d.l1_active_power_import * 1000);
-    append_float(d.l1_active_power_export * 1000);
-    append_float(d.l2_active_power_import * 1000);
-    append_float(d.l2_active_power_export * 1000);
-    append_float(d.l3_active_power_import * 1000);
-    append_float(d.l3_active_power_export * 1000);
+    append_int(static_cast<int>(d.l1_active_power_import * 1000));
+    append_int(static_cast<int>(d.l1_active_power_export * 1000));
+    append_int(static_cast<int>(d.l2_active_power_import * 1000));
+    append_int(static_cast<int>(d.l2_active_power_export * 1000));
+    append_int(static_cast<int>(d.l3_active_power_import * 1000));
+    append_int(static_cast<int>(d.l3_active_power_export * 1000));
     // per-phase reactive power
-    append_float(d.l1_reactive_power_import * 1000);
-    append_float(d.l1_reactive_power_export * 1000);
-    append_float(d.l2_reactive_power_import * 1000);
-    append_float(d.l2_reactive_power_export * 1000);
-    append_float(d.l3_reactive_power_import * 1000);
-    append_float(d.l3_reactive_power_export * 1000);
+    append_int(static_cast<int>(d.l1_reactive_power_import * 1000));
+    append_int(static_cast<int>(d.l1_reactive_power_export * 1000));
+    append_int(static_cast<int>(d.l2_reactive_power_import * 1000));
+    append_int(static_cast<int>(d.l2_reactive_power_export * 1000));
+    append_int(static_cast<int>(d.l3_reactive_power_import * 1000));
+    append_int(static_cast<int>(d.l3_reactive_power_export * 1000));
     // voltages
     append_float(d.l1_voltage_rms);
     append_float(d.l2_voltage_rms);

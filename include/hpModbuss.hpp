@@ -42,9 +42,9 @@ public:
     // Return human-readable status
     std::string status() const;
 
-    // Helper: convert a 32-bit float to two 16-bit registers (big-endian word order)
+    // Helper: convert a 32-bit float to two 16-bit registers (small endian word order)
     static std::vector<uint16_t> float_to_regs(float f);
-
+    static std::vector<uint16_t> int_to_regs(int i);
     // Build the full register vector from an hpData snapshot
     std::vector<uint16_t> make_regs(const hpData &d) const;
 
