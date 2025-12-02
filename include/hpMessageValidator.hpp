@@ -12,7 +12,7 @@ class HanportMessageValidator{
     public:
     //Constructor methods 
     /***********************************************************************'*/
-    HanportMessageValidator(std::vector<uint8_t> raw_hp_message);
+    HanportMessageValidator(std::vector<uint8_t>& raw_hp_message);
     void calculate_crc();
     size_t extract_message();
     void extract_crc(size_t exclamation_pos);

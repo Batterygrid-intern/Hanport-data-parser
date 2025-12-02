@@ -11,7 +11,7 @@
 
 //START OF CONSTRUCTOR METHOD
 /*************************************************************************** */
-HanportMessageValidator::HanportMessageValidator(std::vector<uint8_t> raw_hp_message){
+HanportMessageValidator::HanportMessageValidator(std::vector<uint8_t> &raw_hp_message){
     //initialize attribut with 
     this->raw_hp_message=raw_hp_message;
     //split the message from the crc and return the position of the end message indicator
