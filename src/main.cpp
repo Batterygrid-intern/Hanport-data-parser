@@ -14,7 +14,7 @@ int main(int argc, char** argv)
 {
   //parse command line options
   //build class for this
-  std::string configFilePath = "~/ws/bgs-ws/Hanport-data-parser/configs/bgs-lokal.ini";
+  std::string configFilePath = "configs/bgs-lokal.ini";
   for (int i = 1; i < argc; ++i)
   {
     std::string a(argv[i]);
@@ -121,7 +121,7 @@ int main(int argc, char** argv)
   while (true)
   {
     // tick heartbeat once per loop iteration
-    heartbeat += 1.0f;
+    heartbeat += 1;
     // always expose heartbeat even if no serial message arrives
     data_obj.heartbeat = heartbeat;
     raw_hp_message = serial_reader.hpRead();
@@ -179,7 +179,7 @@ int main(int argc, char** argv)
     // write registers every loop so heartbeat and last-known values are always exposed
     try {
       modbus_server.set_from_hpData(data_obj, 0);
-      logger->debug("Modbus registers updated (heartbeat: {})", data_obj.time_stamp);
+      logger->debug("Modbus registers updated (heartbeat: {})", data_obj.heartbeat);
     } catch (const std::exception &e) {
       logger->warn("Failed to update modbus registers: {}", e.what());
     }
