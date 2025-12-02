@@ -8,7 +8,7 @@
 class hpData{
     public:
     //time_stamp on the message;
-    int heart_beat = 0;
+    int heartbeat = 0;
     //active energy(energy used to light up a lightbulb run a motor)
     //(energy that is converted to run devices and is consumed to heat movement or such)
     float active_energy_import_total = 0;

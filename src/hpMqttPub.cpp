@@ -139,7 +139,7 @@ bool HpMqttPub::publishIndividualFields(const hpData& data, const std::string& b
     allSuccess &= publishFloat(baseTopic + "/timestamp", data.time_stamp);
 
     // Energy measurements
-    allSuccess &= publishFloat(baseTopic + "/energy/active_import_total", data.active_enery_import_total);
+    allSuccess &= publishFloat(baseTopic + "/energy/active_import_total", data.active_energy_import_total);
     allSuccess &= publishFloat(baseTopic + "/energy/active_export_total", data.active_energy_export_total);
     allSuccess &= publishFloat(baseTopic + "/energy/reactive_import_total", data.reactive_energy_import_total);
     allSuccess &= publishFloat(baseTopic + "/energy/reactive_export_total", data.reactive_energy_export_total);

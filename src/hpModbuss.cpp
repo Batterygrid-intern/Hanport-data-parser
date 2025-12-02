@@ -196,8 +196,8 @@ std::vector<uint16_t> hpModbuss::make_regs(const hpData &d) const {
         auto parts = float_to_regs(v);
         r.insert(r.end(), parts.begin(), parts.end());
     };
-    append_float(d.time_stamp);
-    append_float(d.active_enery_import_total);
+    append_float(d.heartbeat);
+    append_float(d.active_energy_import_total);
     append_float(d.active_energy_export_total);
     append_float(d.reactive_energy_import_total);
     append_float(d.reactive_energy_export_total);

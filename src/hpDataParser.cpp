@@ -72,7 +72,7 @@ void hpDataParser::parse_electricity_data(std::string& line,std::string& obis_co
     //ACTIVE ENERGY
     //active energy import total
     if(obis_code == "1-0:1.8.0"){
-        dt_obj.active_enery_import_total = set_value(line);
+        dt_obj.active_energy_import_total = set_value(line);
     }
     //active energy export total
     else if(obis_code == "1-0:2.8.0"){
