@@ -179,22 +179,22 @@ void hpModbuss::set_holding_registers(uint16_t address, const std::vector<uint16
     }
 }
 
-// static helper: float -> two registers (big-endian word order)
+// static helper: float -> two registers (small endian word order)
 std::vector<uint16_t> hpModbuss::float_to_regs(float f){
     uint32_t u = 0;
     static_assert(sizeof(float) == 4, "float must be 32-bit");
     std::memcpy(&u, &f, sizeof(u));
     uint16_t high = static_cast<uint16_t>((u >> 16) & 0xFFFF);
     uint16_t low = static_cast<uint16_t>(u & 0xFFFF);
-    return std::vector<uint16_t>{high, low};
+    return std::vector<uint16_t>{low, high};
 }
 
 // Build register vector from hpData
 std::vector<uint16_t> hpModbuss::make_regs(const hpData &d) const {
-    std::vector<uint16_t> r;
-    auto append_float = [&](float v){
+    std::vector<uint16_t> registers;
+    auto append_float = [&](const float v){
         auto parts = float_to_regs(v);
-        r.insert(r.end(), parts.begin(), parts.end());
+        registers.insert(registers.end(), parts.begin(), parts.end());
     };
     append_float(d.heartbeat);
     append_float(d.active_energy_import_total);
@@ -227,7 +227,7 @@ std::vector<uint16_t> hpModbuss::make_regs(const hpData &d) const {
     append_float(d.l1_current_rms);
     append_float(d.l2_current_rms);
     append_float(d.l3_current_rms);
-    return r;
+    return registers;
 }
 
 // Convenience: set registers directly from hpData
