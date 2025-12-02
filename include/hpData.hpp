@@ -8,10 +8,10 @@
 class hpData{
     public:
     //time_stamp on the message;
-    float time_stamp = 0;
+    int heart_beat = 0;
     //active energy(energy used to light up a lightbulb run a motor)
     //(energy that is converted to run devices and is consumed to heat movement or such)
-    float active_enery_import_total = 0;
+    float active_energy_import_total = 0;
     float active_energy_export_total = 0;
     //reactive energy, energy that is stored in capacitors or not directly consumed by a device) energy that returns in the circut 
     float reactive_energy_import_total = 0; //kvarh
