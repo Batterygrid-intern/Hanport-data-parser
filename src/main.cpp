@@ -7,13 +7,7 @@
 #include "config.hpp"
 #include "spdlog/sinks/daily_file_sink.h"
 #include <iostream>
-#include <cstdlib>
-#include <sstream>
 #include <iomanip>
-#include <thread>
-#include <chrono>
-#include <cstdint>
-#include <cstring>
 #include <vector>
 
 int main(int argc, char** argv)
