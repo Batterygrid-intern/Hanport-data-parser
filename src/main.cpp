@@ -20,7 +20,7 @@ int main(int argc, char** argv)
 {
   //parse command line options
   //build class for this
-  std::string configFilePath = "configs/app.ini";
+  std::string configFilePath = "~/ws/bgs-ws/Hanport-data-parser/configs/bgs-lokal.ini";
   for (int i = 1; i < argc; ++i)
   {
     std::string a(argv[i]);
@@ -65,7 +65,7 @@ int main(int argc, char** argv)
 
 
   // heartbeat counter (ticks every loop cycle) - will be stored in time_stamp
-  float heartbeat = 0.0f;
+  int heartbeat = 0;
   // register conversion and packing are provided by hpModbuss (see set_from_hpData)
   // start modbus server to expose hpData on registers
 
@@ -105,11 +105,11 @@ int main(int argc, char** argv)
     // continue without modbus, main functionality still runs
   }
 
-  const char *SERIAL_PORT = cfg.get("SERIALPORT", "PATH", "/dev/ttyAMA0").c_str(); 
+  std::string SERIAL_PORT = cfg.get("SERIALPORT", "PATH", "/dev/ttyAMA0");
   // construct serial_reader with default attributes.
   hpSerialRead serial_reader;
   try {
-    serial_reader.openPort(SERIAL_PORT);
+    serial_reader.openPort(SERIAL_PORT.c_str());
   } catch (std::exception &e) {
     logger->error("SerialPort: Failed to open serial port: {}", e.what());
     throw; // Re-throw as this is critical
@@ -129,7 +129,7 @@ int main(int argc, char** argv)
     // tick heartbeat once per loop iteration
     heartbeat += 1.0f;
     // always expose heartbeat even if no serial message arrives
-    data_obj.time_stamp = heartbeat;
+    data_obj.heartbeat = heartbeat;
     raw_hp_message = serial_reader.hpRead();
     /*if (!raw_hp_message.empty()) {
       std::ostringstream oss;
@@ -139,11 +139,11 @@ int main(int argc, char** argv)
       logger->debug("Raw serial bytes: {}", oss.str());
     }*/
 
-    std::vector<std::string> message_array;
     // just for use when testing
     // try to validate the data if failed catch exceptions thrown inside HanportMessageValidator class.
     if (!raw_hp_message.empty()) // find '!'?{
     {
+      std::vector<std::string> message_array;
       try { 
         // instantiate message_validator object with transmitted raw data from serial port
         HanportMessageValidator message_validator(raw_hp_message);
