@@ -10,13 +10,20 @@
 #include <stdexcept>
 #include <chrono>
 #include <cstring>
+#include <iostream>
+#include <ostream>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/select.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #ifdef LIBMODBUS_FOUND
 #include <modbus/modbus.h>
 #endif
+
+#define NB_CONNECTION 10
 
 struct hpModbuss::Impl {
     uint16_t port;
@@ -66,8 +73,8 @@ void hpModbuss::start(){
     }
 
     // copy initial registers from map to mapping (all zeros initially)
-    // listen
-    pimpl_->server_socket = modbus_tcp_listen(pimpl_->ctx, 1);
+    // listen for connection
+    pimpl_->server_socket = modbus_tcp_listen(pimpl_->ctx, NB_CONNECTION);
     if (pimpl_->server_socket == -1) {
         modbus_mapping_free(pimpl_->mb_mapping);
         modbus_free(pimpl_->ctx);
@@ -76,45 +83,83 @@ void hpModbuss::start(){
         throw std::runtime_error("Failed to listen on modbus TCP socket");
     }
 
-    // server thread
-    pimpl_->server_thread = std::thread([this](){
-        // Accept and serve loop
-        try {
-            while (pimpl_->running) {
-                int rc;
-                // Wait for client
-                int client_sock = modbus_tcp_accept(pimpl_->ctx, &pimpl_->server_socket);
-                if (client_sock == -1) {
-                    if (!pimpl_->running) break;
-                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    // server thread starts server and handles queries
+    pimpl_->server_thread = std::thread([this]() {
+        //@ refset master of all sockets were monitoring represents all the connected sockets
+        fd_set refset; //data structure that works as bitarray each bit represents a socket
+        fd_set rdset; // copy of my refset which will be modified by select() to show which sockets has data ready
+
+        int fdmax; //maximum file descriptor number to increment sockets to
+        int rc;
+        int master_socket;
+
+        //buffer to store the query from the modbus client.
+        uint8_t query[MODBUS_TCP_MAX_ADU_LENGTH];
+
+        FD_ZERO(&refset);//clear the refset array from al sockets
+        FD_SET(pimpl_->server_socket, &refset);//add server sockets to refset
+
+        //file descriptors are just integers assigend by the os. stdin = 0 stdout = 1 stderr = 2 first socket could be = 3
+        //fdmax will be used for select to know how many sockets to check
+        fdmax = pimpl_->server_socket; //assign a variable with the highest value socket so that we know how many connections there are
+        while (pimpl_->running) {
+            //assigne a copy of the refset to rdset to pass to select
+            rdset = refset;
+            //timeval struct provides a timout for select()
+            //allows the thread to wake up periodically to check if pimple_>running is false and terminate gracefully
+            //check for socket activity if there is new connections or data
+            struct timeval tv;
+            tv.tv_sec = 1;
+            tv.tv_usec = 0;
+            //select() system call to monitor multiple sockets. which has data ready to read, accept connections
+            int ret = select(fdmax +1, &rdset, nullptr, nullptr, &tv);
+            if (ret == -1) {
+                if (!pimpl_->running) break;
+                perror("Server select() failure.");
+                break;
+            }
+            if (ret == 0) {
+                continue;
+            }
+            for (master_socket = 0; master_socket <= fdmax; master_socket++) {
+                if (!FD_ISSET(master_socket, &rdset)) {
                     continue;
                 }
-
-                // Serve requests on this context until error or stop
-                while (pimpl_->running) {
-                    uint8_t query[MODBUS_TCP_MAX_ADU_LENGTH];
-                    rc = modbus_receive(pimpl_->ctx, query);
-                    if (rc > 0) {
-                        // Before replying, copy protected registers from our map into mapping
-                        {
-                            std::lock_guard<std::mutex> lk(pimpl_->mtx);
-                            for (const auto &kv : pimpl_->registers) {
-                                uint16_t addr = kv.first;
-                                if (addr < (uint16_t)1000) {
-                                    pimpl_->mb_mapping->tab_registers[addr] = kv.second;
-                                }
-                            }
+                if (master_socket == pimpl_->server_socket) {
+                    socklen_t addrlen;
+                    struct sockaddr_in clientaddr;
+                    addrlen = sizeof(clientaddr);
+                    memset(&clientaddr, 0, sizeof(clientaddr));
+                    int newfd = accept(pimpl_->server_socket, reinterpret_cast<struct sockaddr *>(&clientaddr), &addrlen);
+                    if (newfd == -1) {
+                        perror("Server accept() failure.");
+                    }
+                    else {
+                        FD_SET(newfd, &refset);
+                        if (newfd > fdmax) {
+                            fdmax = newfd;
                         }
-                        modbus_reply(pimpl_->ctx, query, rc, pimpl_->mb_mapping);
-                    } else if (rc == -1) {
-                        // client closed or error
-                        break;
+                        char client_ip[INET_ADDRSTRLEN];
+                        inet_ntop(AF_INET, &clientaddr.sin_addr, client_ip, INET_ADDRSTRLEN);
+                        std::cout << "New connection from " << client_ip << ":" << ntohs(clientaddr.sin_port) << std::endl;
                     }
                 }
-                // close client socket and continue
+                else {
+                    modbus_set_socket(pimpl_->ctx, master_socket);
+                    rc = modbus_receive(pimpl_->ctx,query);
+                    if (rc > 0) {
+                        modbus_reply(pimpl_->ctx,query,rc,pimpl_->mb_mapping);
+                    }
+                    else if (rc == -1) {
+                        std::cout << "Connection closed on socket " << master_socket << std::endl;
+                        close(master_socket);
+                        FD_CLR(master_socket, &refset);
+                        if (master_socket == fdmax) {
+                            fdmax--;
+                        }
+                    }
+                }
             }
-        } catch (...) {
-            // swallow to ensure thread exits cleanly
         }
     });
 
@@ -262,7 +307,6 @@ std::string hpModbuss::status() const{
     std::lock_guard<std::mutex> lk(pimpl_->mtx);
     return pimpl_->running ? "running" : "stopped";
 }
-#include "hpModbuss.hpp"
 
 
 
